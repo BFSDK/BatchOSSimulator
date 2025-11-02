@@ -112,6 +112,16 @@
     </div>          
 </body>
 <script>
+    function notify(title, subtitle) {
+        window.parent.postMessage({
+            type: 'BATCHOS_API',
+            action: 'SHOW_NOTIFY',
+            data: {
+                notif_title: title,
+                notif_subtitle: subtitle
+            }
+        }, '*');
+    }
     /////Wallpaper/////
     function applywallpaper() {
         const selectedRadio = document.querySelector('input[name="wlp"]:checked');
@@ -146,7 +156,7 @@
             }
         }, '*');
         
-        alert('Username saved! Reload BatchOS to see changes in Start menu.');
+        notify('Settings', `Your username changed to ${nickname}.`);
     }
 
     /////Glass effect/////
@@ -190,4 +200,5 @@
         )
     }
 </script>
+
 </html>
