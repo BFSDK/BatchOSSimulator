@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>App Store</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: #222;
+            color: #fff;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .store-container {
+            display: flex;
+            height: 100%;
+            background: #222;
+        }
+
+        /* Боковая панель с вкладками */
+        .sidebar {
+            width: 150px;
+            background: #2a2a2a;
+            border-right: 1px solid #444;
+            padding: 10px 0;
+        }
+
+        .tab-item {
+            padding: 12px 15px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            border-left: 3px solid transparent;
+            text-align: left;
+        }
+
+        .tab-item:hover {
+            background: #333;
+        }
+
+        .tab-item.active {
+            background: #333;
+            border-left-color: #0078d4;
+        }
+
+        /* Область контента */
+        .content-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #222;
+        }
+
+        /* Заголовок */
+        .content-header {
+            background: #333;
+            padding: 15px 20px;
+            border-bottom: 1px solid #444;
+        }
+
+        .content-title {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        /* Сетка приложений */
+        .apps-grid {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        /* Карточка приложения */
+        .app-card {
+            background: #333;
+            border-radius: 8px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 1px solid #444;
+            text-align: left;
+        }
+
+        .app-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            border-color: #0078d4;
+        }
+
+        .app-name {
+            font-weight: bold;
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
+
+        .app-description {
+            font-size: 13px;
+            color: #999;
+            margin-bottom: 10px;
+            line-height: 1.4;
+        }
+
+        .app-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .app-price {
+            font-weight: bold;
+            color: #4ec9b0;
+            font-size: 14px;
+        }
+
+        .app-developer {
+            color: #888;
+            font-size: 12px;
+        }
+
+        .app-button {
+            width: 100%;
+            padding: 8px;
+            background: #0078d4;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            font-size: 13px;
+        }
+
+        .app-button:hover {
+            background: #106ebe;
+        }
+
+        .app-button.installed {
+            background: #107c10;
+        }
+
+        .app-button.installed:hover {
+            background: #0d6b0d;
+        }
+
+        /* Страница About */
+        .about-content {
+            padding: 30px;
+            max-width: 600px;
+        }
+
+        .about-title {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #fff;
+        }
+
+        .about-description {
+            line-height: 1.6;
+            margin-bottom: 20px;
+            color: #ccc;
+        }
+
+        .about-features {
+            list-style: none;
+            padding: 0;
+        }
+
+        .about-features li {
+            padding: 8px 0;
+            border-bottom: 1px solid #444;
+            color: #ccc;
+        }
+
+        .about-version {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #444;
+            color: #888;
+            font-size: 14px;
+        }
+
+        /* Уведомления */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #333;
+            border: 1px solid #555;
+            border-radius: 6px;
+            padding: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            z-index: 3000;
+            display: none;
+        }
+
+        .notification.success {
+            border-left: 4px solid #107c10;
+        }
+
+        .notification.error {
+            border-left: 4px solid #d83b01;
+        }
+
+        /* Скроллбар */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #333;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #555;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="store-container">
+        <!-- Боковая панель с вкладками -->
+        <div class="sidebar">
+            <div class="tab-item active" onclick="showTab('apps')">Apps</div>
+            <div class="tab-item" onclick="showTab('installed')">Installed</div>
+            <div class="tab-item" onclick="showTab('about')">About</div>
+        </div>
+
+        <!-- Область контента -->
+        <div class="content-area">
+            <div class="content-header">
+                <div class="content-title" id="contentTitle">Available Apps</div>
+            </div>
+            
+            <!-- Сетка приложений -->
+            <div class="apps-grid" id="appsGrid">
+                <!-- Приложения будут загружаться здесь -->
+            </div>
+
+            <!-- Страница About -->
+            <div class="about-content" id="aboutContent" style="display: none;">
+                <div class="about-title">BatchOS App Store</div>
+                <div class="about-description">
+                    Welcome to the BatchOS App Store - your gateway to expanding the functionality 
+                    of your operating system. Discover and install new applications to customize 
+                    your BatchOS experience.
+                </div>
+                <ul class="about-features">
+                    <li>• Easy app installation and management</li>
+                    <li>• One-click app updates</li>
+                    <li>• Safe and verified applications</li>
+                    <li>• Automatic integration with BatchOS</li>
+                    <li>• Free and premium applications</li>
+                </ul>
+                <div class="about-version">
+                    Version 1.0.0<br>
+                    BatchOS App Store Team
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Уведомление -->
+    <div class="notification" id="notification">
+        <div id="notificationText">Notification message</div>
+    </div>
+
+    <script>
+        // Глобальные переменные
+        let currentTab = 'apps';
+        let installedApps = [];
+        let availableApps = [];
+
+        // Инициализация
+        document.addEventListener('DOMContentLoaded', function() {
+            loadInstalledApps();
+            loadAvailableApps();
+            showTab('apps');
+        });
+
+        // Загрузка установленных приложений
+        function loadInstalledApps() {
+            try {
+                const saved = localStorage.getItem('batchos_installed_apps');
+                installedApps = saved ? JSON.parse(saved) : [];
+            } catch (e) {
+                installedApps = [];
+            }
+        }
+
+        function loadAvailableApps() {
+            availableApps = [
+                {
+                    id: 'snake',
+                    icon: '🐍',
+                    name: 'Snake Game',
+                    description: 'Classic snake game with multiple difficulty levels. Control the snake, eat food, and grow longer without hitting the walls or yourself.',
+                    developer: 'BatchOS Team',
+                    category: 'games',
+                    price: 'FREE',
+                    version: '1.0.0',
+                    size: '0.8 MB'
+                },
+                {
+                    id: 'paint',
+                    name: 'Paint',
+                    description: 'Simple drawing application with various brushes and colors for creating digital artwork.',
+                    developer: 'BatchOS Team', 
+                    category: 'utilities',
+                    price: 'FREE',
+                    version: '1.0.0',
+                    size: '2.1 MB'
+                }
+            ];
+        }
+
+        // Переключение вкладок
+        function showTab(tab) {
+            currentTab = tab;
+            
+            // Обновляем активную вкладку
+            document.querySelectorAll('.tab-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Обновляем заголовок
+            const title = document.getElementById('contentTitle');
+            const appsGrid = document.getElementById('appsGrid');
+            const aboutContent = document.getElementById('aboutContent');
+            
+            switch(tab) {
+                case 'apps':
+                    title.textContent = 'Available Apps';
+                    appsGrid.style.display = 'grid';
+                    aboutContent.style.display = 'none';
+                    renderApps('available');
+                    break;
+                case 'installed':
+                    title.textContent = 'Installed Apps';
+                    appsGrid.style.display = 'grid';
+                    aboutContent.style.display = 'none';
+                    renderApps('installed');
+                    break;
+                case 'about':
+                    title.textContent = 'About App Store';
+                    appsGrid.style.display = 'none';
+                    aboutContent.style.display = 'block';
+                    break;
+            }
+        }
+
+        // Отображение приложений
+        function renderApps(type = 'available') {
+            const appsGrid = document.getElementById('appsGrid');
+            
+            let appsToShow = [];
+            
+            if (type === 'available') {
+                appsToShow = availableApps;
+            } else if (type === 'installed') {
+                appsToShow = availableApps.filter(app => installedApps.includes(app.id));
+            }
+            
+            appsGrid.innerHTML = '';
+            
+            if (appsToShow.length === 0) {
+                if (type === 'installed') {
+                    appsGrid.innerHTML = `
+                        <div style="grid-column: 1/-1; text-align: center; padding: 60px 20px; color: #666;">
+                            <div style="font-size: 18px; margin-bottom: 10px;">No apps installed</div>
+                            <div style="font-size: 14px;">Visit the "Apps" tab to browse available applications</div>
+                        </div>
+                    `;
+                } else {
+                    appsGrid.innerHTML = `
+                        <div style="grid-column: 1/-1; text-align: center; padding: 60px 20px; color: #666;">
+                            <div style="font-size: 18px; margin-bottom: 10px;">No apps available</div>
+                            <div style="font-size: 14px;">More applications coming soon!</div>
+                        </div>
+                    `;
+                }
+                return;
+            }
+            
+            appsToShow.forEach(app => {
+                const isInstalled = installedApps.includes(app.id);
+                const appCard = document.createElement('div');
+                appCard.className = 'app-card';
+                
+                appCard.innerHTML = `
+                    <div class="app-name">${app.name}</div>
+                    <div class="app-description">${app.description}</div>
+                    <div class="app-meta">
+                        <div class="app-price">${app.price}</div>
+                        <div class="app-developer">by ${app.developer}</div>
+                    </div>
+                    <button class="app-button ${isInstalled ? 'installed' : ''}" 
+                            onclick="${isInstalled ? 'uninstallApp' : 'installApp'}('${app.id}')">
+                        ${isInstalled ? 'Uninstall' : 'Install'}
+                    </button>
+                `;
+                
+                appsGrid.appendChild(appCard);
+            });
+        }
+
+        // Установка приложения
+        function installApp(appId) {
+            if (!installedApps.includes(appId)) {
+                installedApps.push(appId);
+                saveInstalledApps();
+                showNotification(`"${getAppName(appId)}" installed successfully!`, 'success');
+                
+                // Обновляем отображение
+                if (currentTab === 'installed') {
+                    renderApps('installed');
+                } else {
+                    renderApps('available');
+                }
+                
+                // Добавляем приложение в меню ОС
+                addAppToOS(appId);
+            }
+        }
+
+        // Удаление приложения
+        function uninstallApp(appId) {
+            const index = installedApps.indexOf(appId);
+            if (index > -1) {
+                const appName = getAppName(appId);
+                installedApps.splice(index, 1);
+                saveInstalledApps();
+                showNotification(`"${appName}" uninstalled successfully!`, 'success');
+                
+                // Обновляем отображение
+                if (currentTab === 'installed') {
+                    renderApps('installed');
+                } else {
+                    renderApps('available');
+                }
+                
+                // Удаляем приложение из меню ОС
+                removeAppFromOS(appId);
+            }
+        }
+
+        // Получить имя приложения по ID
+        function getAppName(appId) {
+            const app = availableApps.find(a => a.id === appId);
+            return app ? app.name : 'App';
+        }
+
+        // Сохранение установленных приложений
+        function saveInstalledApps() {
+            localStorage.setItem('batchos_installed_apps', JSON.stringify(installedApps));
+        }
+
+        // Добавление приложения в ОС
+        function addAppToOS(appId) {
+            const app = availableApps.find(a => a.id === appId);
+            if (app) {
+                window.parent.postMessage({
+                    type: 'BATCHOS_API',
+                    action: 'BATCHOS_APP_INSTALL',
+                    data: {
+                        id: app.id,
+                        name: app.name,
+                        icon: app.icon,
+                        path: `apps/${app.id}/app.html`
+                    }
+                }, '*');
+            }
+        }
+
+        // Удаление приложения из ОС
+        function removeAppFromOS(appId) {
+            window.parent.postMessage({
+                type: 'BATCHOS_API',
+                action: 'BATCHOS_APP_UNINSTALL',
+                data: { id: appId }
+            }, '*');
+        }
+
+        // Уведомления
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            const notificationText = document.getElementById('notificationText');
+            
+            notificationText.textContent = message;
+            notification.className = `notification ${type}`;
+            notification.style.display = 'block';
+            
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000);
+        }
+
+        // Закрытие приложения
+        function closeApp() {
+            window.parent.postMessage({
+                type: 'BATCHOS_API',
+                action: 'CLOSE_WINDOW',
+                data: { windowId: getWindowId() }
+            }, '*');
+        }
+
+        function getWindowId() {
+            const iframe = window.frameElement;
+            return iframe ? iframe.closest('.window')?.id : null;
+        }
+
+        // Обработчики клавиш
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeApp();
+            }
+        });
+    </script>
+</body>
+</html>
