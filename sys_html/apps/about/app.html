@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About</title>
+    <style>
+        @font-face {
+            font-family: 'BatchSans';
+            src: url('bin/fonts/NetflixSans-Rg.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+        }
+        @font-face {
+            font-family: 'BatchSansIt';
+            src: url('bin/fonts/NetflixSans-It.ttf') format('truetype');
+            font-weight: normal;
+            font-style: italic;
+        }
+        body {
+            background-color: #333;
+            color: white;
+            font-family: 'BatchSans', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .header {
+            font-size: xx-large;
+        }
+        .subtitle {
+            font-size: 13px;
+            font-style: italic;
+        }
+        .intertext {
+            font-style: italic;
+        }
+        /* DONT DELETE!!! Styles for cursor! */
+        * {
+            cursor: none !important;
+        }
+
+        .custom-cursor {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 32px;
+            height: 32px;
+            pointer-events: none;
+            z-index: 9999;
+            background-image: url('../../bin/cur/cursor.png'); /* path to system cursor, you can make path to your cursor */
+            background-size: cover;
+        }
+        /* End of styles for cursors */
+    </style>
+</head>
+<body>
+    <div class="custom-cursor">
+        <!--DONT DELETE THIS CLASS!! Cursor main div-->
+    </div>
+    <div class="header">
+        BATCH OS LEGACY
+    </div>
+    <div class="subtitle">
+        Legacy | Alpha 0.0.0.1
+    </div>
+    <div class="intertext">
+        Open-Source web interface. Work without PC, with any device! By batch395. I CAN MAKE BETTTERRRR!
+    </div>
+</body>
+<script>
+    /////////////////////CURSOR JS CODE/////////////////////////////
+    const cursor = document.querySelector('.custom-cursor');
+    
+    document.addEventListener('mousemove', (e) => {
+        cursor.style.left = e.clientX + 'px';
+        cursor.style.top = e.clientY + 'px';
+    });
+
+    document.addEventListener('mouseout', (e) => {
+        if (!e.relatedTarget) {
+            cursor.style.opacity = '0';
+        }
+    });
+
+    document.addEventListener('mouseover', () => {
+        cursor.style.opacity = '1';
+    });
+    //////////////////////DONT DELETE//////////////////////////////
+</script>
+</html>

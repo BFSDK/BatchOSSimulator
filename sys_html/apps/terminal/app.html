@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terminal</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Consolas', 'Lucida Console', monospace;
+        }
+
+        /* DONT DELETE!!! Styles for cursor! */
+        * {
+            cursor: none !important;
+        }
+
+        .custom-cursor {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 32px;
+            height: 32px;
+            pointer-events: none;
+            z-index: 9999;
+            background-image: url('../../bin/cur/cursor.png'); /* path to system cursor, you can make path to your cursor */
+            background-size: cover;
+        }
+        /* End of styles for cursors */
+        
+        body {
+            background-color: #000;
+            color: #ccc;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .cmd-container {
+            flex: 1;
+            padding: 10px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .cmd-line {
+            display: flex;
+            margin-bottom: 5px;
+        }
+        
+        .prompt {
+            margin-right: 5px;
+            white-space: nowrap;
+        }
+        
+        .input-line {
+            display: flex;
+            align-items: center;
+        }
+        
+        .cmd-input {
+            background: transparent;
+            border: none;
+            color: #ccc;
+            font-size: 16px;
+            outline: none;
+            flex: 1;
+            caret-color: #ccc;
+        }
+        
+        .output {
+            white-space: pre-wrap;
+            margin-bottom: 5px;
+        }
+        
+        .error {
+            color: #ff5555;
+        }
+        
+        .success {
+            color: #55ff55;
+        }
+        
+        .info {
+            color: #5555ff;
+        }
+        
+        .warning {
+            color: #ffff55;
+        }
+        
+        .file-item {
+            color: #55ffff;
+        }
+        
+        .dir-item {
+            color: #55ff55;
+        }
+        
+        .blink {
+            animation: blink 1s infinite;
+        }
+        
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+        
+        .help-table {
+            margin-top: 10px;
+            border-collapse: collapse;
+            width: 100%;
+        }
+        
+        .help-table th, .help-table td {
+            border: 1px solid #555;
+            padding: 5px;
+            text-align: left;
+        }
+        
+        .help-table th {
+            background-color: #222;
+        }
+    </style>
+</head>
+<body>
+    <div class="custom-cursor"></div>
+    <div class="cmd-container" id="cmd-container">
+        <div class="output">
+            The BatchOS Legacy [ver0.0.0.1 alpha]<br>
+            BatchOS Terminal; Version 1.0.0 (Codename: TermiLegacy Pacman)<br><br>
+        </div>
+        <div class="cmd-line input-line">
+            <span class="prompt">$batchos/terminal/&gt;</span>
+            <input type="text" class="cmd-input" id="cmd-input" autofocus>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const cmdInput = document.getElementById('cmd-input');
+            const cmdContainer = document.getElementById('cmd-container');
+            
+            let commandHistory = [];
+            let historyIndex = -1;
+            let currentPath = '$batchos/terminal/';
+            let textColor = '#ccc';
+
+            // Load command history from localStorage
+            loadCommandHistory();
+            
+            // Focus on input field when clicking anywhere
+            cmdContainer.addEventListener('click', function() {
+                cmdInput.focus();
+            });
+            
+            // Handle command input
+            cmdInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    processCommand(cmdInput.value.trim());
+                    if (cmdInput.value.trim()) {
+                        commandHistory.push(cmdInput.value.trim());
+                        if (commandHistory.length > 50) {
+                            commandHistory.shift();
+                        }
+                        saveCommandHistory();
+                    }
+                    historyIndex = commandHistory.length;
+                    cmdInput.value = '';
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    if (commandHistory.length > 0) {
+                        if (historyIndex > 0) historyIndex--;
+                        cmdInput.value = commandHistory[historyIndex] || '';
+                    }
+                } else if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    if (historyIndex < commandHistory.length - 1) {
+                        historyIndex++;
+                        cmdInput.value = commandHistory[historyIndex] || '';
+                    } else {
+                        historyIndex = commandHistory.length;
+                        cmdInput.value = '';
+                    }
+                } else if (e.key === 'Tab') {
+                    e.preventDefault();
+                    autoComplete(cmdInput.value);
+                }
+            });
+            
+            // Command processing function
+            function processCommand(cmd) {
+                if (!cmd) return;
+                
+                const inputLine = document.querySelector('.input-line');
+                const outputDiv = document.createElement('div');
+                outputDiv.className = 'output';
+                
+                // Create new line for command output
+                const commandOutput = document.createElement('div');
+                commandOutput.className = 'cmd-line';
+                commandOutput.innerHTML = `<span class="prompt">${currentPath}&gt;</span> ${cmd}`;
+                
+                // Add command output before input field
+                cmdContainer.insertBefore(commandOutput, inputLine);
+                
+                // Process command
+                const args = cmd.split(' ');
+                const command = args[0].toLowerCase();
+                
+                let result = '';
+                let resultClass = 'output';
+                
+                switch(command) {
+                    case 'help':
+                        result = getHelpText();
+                        break;
+                        
+                    case 'cls':
+                    case 'clear':
+                        clearScreen();
+                        return;
+                        
+                    case 'echo':
+                        result = args.slice(1).join(' ');
+                        break;
+                        
+                    case 'time':
+                        result = getCurrentTime();
+                        break;
+                        
+                    case 'date':
+                        result = getCurrentDate();
+                        break;
+                        
+                    case 'ver':
+                    case 'version':
+                        result = getVersionInfo();
+                        break;
+                        
+                    case 'color':
+                        result = changeTextColor(args[1]);
+                        resultClass = result.includes('Error') ? 'error' : 'success';
+                        break;
+                        
+                    case 'rename':
+                        result = renameFile(args[1], args[2]);
+                        resultClass = result.includes('Error') ? 'error' : 'success';
+                        break;
+                        
+                    case 'copy':
+                        result = copyFile(args[1], args[2]);
+                        resultClass = result.includes('Error') ? 'error' : 'success';
+                        break;
+                        
+                    case 'del':
+                    case 'delete':
+                        result = deleteFile(args[1]);
+                        resultClass = result.includes('Error') ? 'error' : 'success';
+                        break;
+                        
+                    case 'mkfile':
+                        result = createFile(args[1], args.slice(2).join(' '));
+                        resultClass = result.includes('Error') ? 'error' : 'success';
+                        break;
+                        
+                    case 'ls':
+                    case 'dir':
+                        result = listFiles();
+                        break;
+                        
+                    case 'type':
+                    case 'cat':
+                        result = viewFile(args[1]);
+                        resultClass = result.includes('Error') ? 'error' : 'output';
+                        break;
+                        
+                    case 'pwd':
+                        result = currentPath;
+                        break;
+                        
+                    case 'cd':
+                        result = changeDirectory(args[1]);
+                        resultClass = result.includes('Error') ? 'error' : 'success';
+                        break;
+                        
+                    case 'history':
+                        result = showHistory();
+                        break;
+                        
+                    case 'exit':
+                    case 'quit':
+                        closeTerminal();
+                        return;
+                        
+                    default:
+                        result = `Error: Command '${command}' not found. Type 'help' for available commands.`;
+                        resultClass = 'error';
+                }
+                
+                // Add command execution result
+                outputDiv.className = resultClass;
+                outputDiv.innerHTML = result;
+                cmdContainer.insertBefore(outputDiv, inputLine);
+                
+                // Scroll container to bottom
+                cmdContainer.scrollTop = cmdContainer.scrollHeight;
+                
+                // Return focus to input field
+                cmdInput.focus();
+            }
+            
+            // Helper functions
+            function getHelpText() {
+                return `Available commands:
+  help     - Show this menu
+  cls      - Clear screen
+  echo     - Display text
+  time     - Show current time
+  date     - Show current date
+  ver      - Show Terminal and BatchOS version
+  color    - Change text color
+  rename   - Rename file in main:// directory
+  copy     - Copy file in main:// directory
+  del      - Delete file in main:// directory
+  mkfile   - Create file in main:// directory
+  ls       - List files
+  type     - View file content
+  pwd      - Show current directory
+  cd       - Change directory
+  history  - Show command history
+  exit     - Close terminal`;
+            }
+            
+            function clearScreen() {
+                cmdContainer.innerHTML = '';
+                const inputLine = document.createElement('div');
+                inputLine.className = 'cmd-line input-line';
+                inputLine.innerHTML = `
+                    <span class="prompt">${currentPath}&gt;</span>
+                    <input type="text" class="cmd-input" id="cmd-input" autofocus>
+                `;
+                cmdContainer.appendChild(inputLine);
+                
+                // Reattach event listeners
+                const newInput = document.getElementById('cmd-input');
+                newInput.addEventListener('keydown', cmdInput.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter') {
+                        processCommand(newInput.value.trim());
+                        if (newInput.value.trim()) {
+                            commandHistory.push(newInput.value.trim());
+                            saveCommandHistory();
+                        }
+                        historyIndex = commandHistory.length;
+                        newInput.value = '';
+                    } else if (e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        if (commandHistory.length > 0) {
+                            if (historyIndex > 0) historyIndex--;
+                            newInput.value = commandHistory[historyIndex] || '';
+                        }
+                    } else if (e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        if (historyIndex < commandHistory.length - 1) {
+                            historyIndex++;
+                            newInput.value = commandHistory[historyIndex] || '';
+                        } else {
+                            historyIndex = commandHistory.length;
+                            newInput.value = '';
+                        }
+                    }
+                }));
+                
+                cmdContainer.addEventListener('click', function() {
+                    newInput.focus();
+                });
+                
+                newInput.focus();
+            }
+            
+            function getCurrentTime() {
+                const now = new Date();
+                return now.toLocaleTimeString('en-US', {hour12: false});
+            }
+            
+            function getCurrentDate() {
+                const now = new Date();
+                return now.toLocaleDateString('en-US');
+            }
+            
+            function getVersionInfo() {
+                return `BatchOS Terminal v1.0.0 (Codename: TermiLegacy Pacman)
+BatchOS Legacy [ver0.0.0.1 alpha]
+Build date: ${new Date().toLocaleDateString()}`;
+            }
+            
+            function changeTextColor(color) {
+                const colors = {
+                    'red': '#ff5555',
+                    'green': '#55ff55',
+                    'blue': '#5555ff',
+                    'yellow': '#ffff55',
+                    'cyan': '#55ffff',
+                    'white': '#ffffff',
+                    'gray': '#cccccc',
+                    'default': '#cccccc'
+                };
+                
+                if (!color || !colors[color.toLowerCase()]) {
+                    return `Error: Available colors: ${Object.keys(colors).join(', ')}`;
+                }
+                
+                textColor = colors[color.toLowerCase()];
+                document.querySelectorAll('.output, .cmd-input, .prompt').forEach(el => {
+                    el.style.color = textColor;
+                });
+                return `Text color changed to ${color}`;
+            }
+            
+            function renameFile(oldName, newName) {
+                if (!oldName || !newName) {
+                    return 'Error: Usage: rename <old_filename> <new_filename>';
+                }
+                
+                try {
+                    const files = JSON.parse(localStorage.getItem('notepad_files') || '{}');
+                    
+                    if (!files[oldName]) {
+                        return `Error: File '${oldName}' not found`;
+                    }
+                    
+                    if (files[newName]) {
+                        return `Error: File '${newName}' already exists`;
+                    }
+                    
+                    files[newName] = files[oldName];
+                    delete files[oldName];
+                    localStorage.setItem('notepad_files', JSON.stringify(files));
+                    
+                    return `File '${oldName}' renamed to '${newName}' successfully`;
+                } catch (e) {
+                    return `Error: Failed to rename file - ${e.message}`;
+                }
+            }
+            
+            function copyFile(source, destination) {
+                if (!source || !destination) {
+                    return 'Error: Usage: copy <source_filename> <destination_filename>';
+                }
+                
+                try {
+                    const files = JSON.parse(localStorage.getItem('notepad_files') || '{}');
+                    
+                    if (!files[source]) {
+                        return `Error: Source file '${source}' not found`;
+                    }
+                    
+                    files[destination] = JSON.parse(JSON.stringify(files[source]));
+                    files[destination].lastModified = new Date().toISOString();
+                    
+                    localStorage.setItem('notepad_files', JSON.stringify(files));
+                    
+                    return `File '${source}' copied to '${destination}' successfully`;
+                } catch (e) {
+                    return `Error: Failed to copy file - ${e.message}`;
+                }
+            }
+            
+            function deleteFile(filename) {
+                if (!filename) {
+                    return 'Error: Usage: del <filename>';
+                }
+                
+                try {
+                    const files = JSON.parse(localStorage.getItem('notepad_files') || '{}');
+                    
+                    if (!files[filename]) {
+                        return `Error: File '${filename}' not found`;
+                    }
+                    
+                    delete files[filename];
+                    localStorage.setItem('notepad_files', JSON.stringify(files));
+                    
+                    return `File '${filename}' deleted successfully`;
+                } catch (e) {
+                    return `Error: Failed to delete file - ${e.message}`;
+                }
+            }
+            
+            function createFile(filename, content = '') {
+                if (!filename) {
+                    return 'Error: Usage: mkfile <filename> [content]';
+                }
+                
+                try {
+                    const files = JSON.parse(localStorage.getItem('notepad_files') || '{}');
+                    
+                    if (files[filename]) {
+                        return `Error: File '${filename}' already exists`;
+                    }
+                    
+                    files[filename] = {
+                        content: content,
+                        lastModified: new Date().toISOString(),
+                        size: content.length
+                    };
+                    
+                    localStorage.setItem('notepad_files', JSON.stringify(files));
+                    
+                    return `File '${filename}' created successfully`;
+                } catch (e) {
+                    return `Error: Failed to create file - ${e.message}`;
+                }
+            }
+            
+            function listFiles() {
+                try {
+                    const files = JSON.parse(localStorage.getItem('notepad_files') || '{}');
+                    const fileNames = Object.keys(files);
+                    
+                    if (fileNames.length === 0) {
+                        return 'No files found in main:// directory';
+                    }
+                    
+                    let output = 'Files in main:// directory:\n';
+                    fileNames.sort().forEach(filename => {
+                        const file = files[filename];
+                        const date = new Date(file.lastModified).toLocaleDateString();
+                        output += `${filename.padEnd(30)} ${date} ${file.size} bytes\n`;
+                    });
+                    
+                    return output;
+                } catch (e) {
+                    return `Error: Failed to list files - ${e.message}`;
+                }
+            }
+            
+            function viewFile(filename) {
+                if (!filename) {
+                    return 'Error: Usage: type <filename>';
+                }
+                
+                try {
+                    const files = JSON.parse(localStorage.getItem('notepad_files') || '{}');
+                    
+                    if (!files[filename]) {
+                        return `Error: File '${filename}' not found`;
+                    }
+                    
+                    return `Content of '${filename}':\n${files[filename].content}`;
+                } catch (e) {
+                    return `Error: Failed to read file - ${e.message}`;
+                }
+            }
+            
+            function changeDirectory(path) {
+                if (!path) {
+                    return 'Error: Usage: cd <path>';
+                }
+                
+                // Simple directory simulation
+                const validPaths = [
+                    'C:\\',
+                    'C:\\Users',
+                    'C:\\Users\\User', 
+                    'C:\\Windows',
+                    'C:\\Windows\\System32',
+                    'C:\\Program Files',
+                    'main://'
+                ];
+                
+                if (validPaths.includes(path)) {
+                    currentPath = path;
+                    return `Directory changed to ${path}`;
+                } else {
+                    return `Error: Path '${path}' not found`;
+                }
+            }
+            
+            function showHistory() {
+                if (commandHistory.length === 0) {
+                    return 'No command history';
+                }
+                
+                let output = 'Command history:\n';
+                commandHistory.forEach((cmd, index) => {
+                    output += ` ${index + 1}  ${cmd}\n`;
+                });
+                
+                return output;
+            }
+            
+            function autoComplete(input) {
+                const commands = ['help', 'cls', 'echo', 'time', 'date', 'ver', 'color', 
+                                'rename', 'copy', 'del', 'mkfile', 'ls', 'type', 'pwd', 'cd', 'history', 'exit'];
+                
+                const matching = commands.filter(cmd => cmd.startsWith(input.toLowerCase()));
+                
+                if (matching.length === 1) {
+                    cmdInput.value = matching[0];
+                } else if (matching.length > 1) {
+                    const outputDiv = document.createElement('div');
+                    outputDiv.className = 'output';
+                    outputDiv.textContent = `Suggestions: ${matching.join(', ')}`;
+                    
+                    const inputLine = document.querySelector('.input-line');
+                    cmdContainer.insertBefore(outputDiv, inputLine);
+                    cmdContainer.scrollTop = cmdContainer.scrollHeight;
+                }
+            }
+            
+            function closeTerminal() {
+                window.parent.postMessage({
+                    type: 'BATCHOS_API',
+                    action: 'CLOSE_WINDOW',
+                    data: { windowId: getWindowId() }
+                }, '*');
+            }
+            
+            function getWindowId() {
+                const iframe = window.frameElement;
+                return iframe ? iframe.closest('.window')?.id : null;
+            }
+            
+            function loadCommandHistory() {
+                try {
+                    const saved = localStorage.getItem('terminal_command_history');
+                    if (saved) {
+                        commandHistory = JSON.parse(saved);
+                    }
+                } catch (e) {
+                    commandHistory = [];
+                }
+            }
+            
+            function saveCommandHistory() {
+                localStorage.setItem('terminal_command_history', JSON.stringify(commandHistory));
+            }
+        });
+        /////////////////////CURSOR JS CODE/////////////////////////////
+        const cursor = document.querySelector('.custom-cursor');
+        
+        document.addEventListener('mousemove', (e) => {
+            cursor.style.left = e.clientX + 'px';
+            cursor.style.top = e.clientY + 'px';
+        });
+
+        document.addEventListener('mouseout', (e) => {
+            if (!e.relatedTarget) {
+                cursor.style.opacity = '0';
+            }
+        });
+
+        document.addEventListener('mouseover', () => {
+            cursor.style.opacity = '1';
+        });
+        //////////////////////DONT DELETE//////////////////////////////
+    </script>
+</body>
+</html>

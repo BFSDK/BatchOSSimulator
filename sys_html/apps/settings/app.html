@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: #222;
+            color: #fff;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .settings-container {
+            display: flex;
+            height: 100%;
+            background: #222;
+        }
+
+        /* Боковая панель с вкладками */
+        .sidebar {
+            width: 200px;
+            background: #2a2a2a;
+            border-right: 1px solid #444;
+            padding: 10px 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .tab-item {
+            padding: 12px 15px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            border-left: 3px solid transparent;
+            text-align: left;
+        }
+
+        .tab-item:hover {
+            background: #333;
+        }
+
+        .tab-item.active {
+            background: #333;
+            border-left-color: #0078d4;
+        }
+
+        .classic-link {
+            margin-top: auto;
+            padding: 12px 15px;
+            cursor: pointer;
+            color: #888;
+            font-size: 14px;
+            border-top: 1px solid #444;
+        }
+
+        .classic-link:hover {
+            color: #fff;
+            background: #333;
+        }
+
+        /* Область контента */
+        .content-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #222;
+        }
+
+        /* Заголовок */
+        .content-header {
+            background: #333;
+            padding: 15px 20px;
+            border-bottom: 1px solid #444;
+        }
+
+        .content-title {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        /* Содержимое настроек */
+        .settings-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .settings-section {
+            margin-bottom: 30px;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #fff;
+            border-bottom: 1px solid #444;
+            padding-bottom: 8px;
+        }
+
+        .setting-item {
+            margin-bottom: 15px;
+            padding: 10px;
+            background: #2a2a2a;
+            border-radius: 6px;
+            border: 1px solid #444;
+        }
+
+        .setting-label {
+            font-size: 14px;
+            margin-bottom: 8px;
+            color: #ccc;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 8px 12px;
+            background: #333;
+            border: 1px solid #555;
+            border-radius: 4px;
+            color: #fff;
+            font-size: 14px;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: #0078d4;
+        }
+
+        .button {
+            padding: 8px 16px;
+            background: #0078d4;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+
+        .button:hover {
+            background: #106ebe;
+        }
+
+        .button.secondary {
+            background: #555;
+        }
+
+        .button.secondary:hover {
+            background: #666;
+        }
+
+        .warning-text {
+            color: #ff6b6b;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
+        .radio-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .radio-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .radio-item input[type="radio"] {
+            accent-color: #0078d4;
+        }
+
+        /* Скроллбар */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #333;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #555;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #666;
+        }
+        /* DONT DELETE!!! Styles for cursor! */
+        * {
+            cursor: none !important;
+        }
+
+        .custom-cursor {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 32px;
+            height: 32px;
+            pointer-events: none;
+            z-index: 9999;
+            background-image: url('../../bin/cur/cursor.png'); /* path to system cursor, you can make path to your cursor */
+            background-size: cover;
+        }
+        /* End of styles for cursors */
+    </style>
+</head>
+<body>
+    <div class="custom-cursor"></div>
+    <div class="settings-container">
+        <!-- Боковая панель с вкладками -->
+        <div class="sidebar">
+            <div class="tab-item active" onclick="showTab('main')">Main Settings</div>
+            <div class="tab-item" onclick="showTab('personalization')">Personalization</div>
+            <div class="tab-item" onclick="showTab('xfinder')">XFinder</div>
+            <a class="classic-link" href="classwiz.html">Back to classic settings</a>
+        </div>
+
+        <!-- Область контента -->
+        <div class="content-area">
+            <div class="content-header">
+                <div class="content-title" id="contentTitle">Main Settings</div>
+            </div>
+            
+            <!-- Содержимое настроек -->
+            <div class="settings-content" id="settingsContent">
+                <!-- Основные настройки -->
+                <div id="mainSettings" class="settings-section">
+                    <div class="setting-item">
+                        <div class="setting-label">Account Name</div>
+                        <input class="input-field" id="nickenter" type="text" placeholder="Enter new account name...">
+                        <button class="button" onclick="set_nickname()">Apply</button>
+                        <div class="warning-text">You must reload BatchOS to fully apply changes.</div>
+                    </div>
+                </div>
+
+                <!-- Персонализация -->
+                <div id="personalizationSettings" class="settings-section" style="display: none;">
+                    <div class="setting-item">
+                        <div class="setting-label">Desktop Wallpaper</div>
+                        <div class="radio-group">
+                            <div class="radio-item">
+                                <input type="radio" class="wallpaper_select" name="wlp" id="1" checked="true">
+                                <label for="1">Wallpaper 1</label>
+                            </div>
+                            <div class="radio-item">
+                                <input type="radio" class="wallpaper_select" name="wlp" id="2">
+                                <label for="2">Wallpaper 2</label>
+                            </div>
+                            <div class="radio-item">
+                                <input type="radio" class="wallpaper_select" name="wlp" id="3">
+                                <label for="3">Wallpaper 3</label>
+                            </div>
+                            <div class="radio-item">
+                                <input type="radio" class="wallpaper_select" name="wlp" id="4">
+                                <label for="4">Wallpaper 4</label>
+                            </div>
+                            <div class="radio-item">
+                                <input type="radio" class="wallpaper_select" name="wlp" id="5">
+                                <label for="5">Wallpaper 5</label>
+                            </div>
+                        </div>
+                        <button class="button" onclick="applywallpaper()">Apply Wallpaper</button>
+                    </div>
+
+                    <div class="setting-item">
+                        <div class="setting-label">Custom Wallpaper (filename without .png)</div>
+                        <input type="text" class="input-field" id="instwallp_input" placeholder="Enter filename">
+                        <button class="button" onclick="applyinstantwallpaper()">Apply</button>
+                    </div>
+
+                    <div class="setting-item">
+                        <div class="setting-label">Custom Wallpaper (URL)</div>
+                        <input type="text" class="input-field" id="linkwallp_input" placeholder="Enter link">
+                        <button class="button" onclick="set_customized_wallpaper()">Apply</button>
+                        <div class="warning-text">WARNING: If you input invalid wallpaper id, filename or link, wallpaper will be white!</div>
+                    </div>
+
+                    <div class="setting-item">
+                        <div class="setting-label">Taskbar Glass Effect</div>
+                        <div class="radio-group">
+                            <div class="radio-item">
+                                <input type="radio" class="glass_select" name="tbg" id="tbg1" checked="true">
+                                <label for="tbg1">Disabled</label>
+                            </div>
+                            <div class="radio-item">
+                                <input type="radio" class="glass_select" name="tbg" id="tbg2">
+                                <label for="tbg2">Enabled</label>
+                            </div>
+                        </div>
+                        <button class="button" onclick="applyglass()">Apply Glass Effect</button>
+                    </div>
+                </div>
+
+                <!-- XFinder настройки -->
+                <div id="xfinderSettings" class="settings-section" style="display: none;">
+                    <div class="setting-item">
+                        <div class="setting-label">Reset Apps List in XFinder</div>
+                        <button class="button secondary" onclick="resetxfinder()">Reset APPSLIST</button>
+                        <div class="warning-text">WARNING: YOU MUST REINSTALL ALL APPS, BUT YOUR DATA WILL BE SAVED!</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Переключение вкладок
+        function showTab(tab) {
+            // Обновляем активную вкладку
+            document.querySelectorAll('.tab-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Обновляем заголовок и содержимое
+            const title = document.getElementById('contentTitle');
+            const mainSettings = document.getElementById('mainSettings');
+            const personalizationSettings = document.getElementById('personalizationSettings');
+            const xfinderSettings = document.getElementById('xfinderSettings');
+            
+            // Скрываем все разделы
+            mainSettings.style.display = 'none';
+            personalizationSettings.style.display = 'none';
+            xfinderSettings.style.display = 'none';
+            
+            // Показываем выбранный раздел
+            switch(tab) {
+                case 'main':
+                    title.textContent = 'Main Settings';
+                    mainSettings.style.display = 'block';
+                    break;
+                case 'personalization':
+                    title.textContent = 'Personalization';
+                    personalizationSettings.style.display = 'block';
+                    break;
+                case 'xfinder':
+                    title.textContent = 'XFinder Settings';
+                    xfinderSettings.style.display = 'block';
+                    break;
+            }
+        }
+
+        // Открытие классических настроек
+        //function openClassicSettings() {
+        //    window.parent.postMessage({
+        //        type: 'BATCHOS_API',
+        //        action: 'OPEN_APP',
+        //        data: {
+        //            appId: 'classic_settings',
+        //            name: 'Classic Settings',
+        //            path: 'classwiz.html'
+        //        }
+        //    }, '*');
+        //}
+
+        // Системные уведомления
+        function notify(title, subtitle) {
+            window.parent.postMessage({
+                type: 'BATCHOS_API',
+                action: 'SHOW_NOTIFY',
+                data: {
+                    notif_title: title,
+                    notif_subtitle: subtitle
+                }
+            }, '*');
+        }
+
+        // Функции для работы с настройками
+        function set_customized_wallpaper() {
+            const urlforcst = document.getElementById("linkwallp_input");
+            window.parent.postMessage({
+                type: 'BATCHOS_API',
+                action: 'SET_CUSTOM_WALLPAPER',
+                data: {
+                    wallpaper_link: urlforcst.value
+                }
+            }, '*');
+        }
+
+        function applywallpaper() {
+            const selectedRadio = document.querySelector('input[name="wlp"]:checked');
+            if (selectedRadio) {
+                window.parent.postMessage({
+                    type: 'BATCHOS_API',
+                    action: 'SET_WALLPAPER',
+                    data: {
+                        wallpaper_id: selectedRadio.id
+                    }
+                }, '*');
+                console.log('Wallpaper change requested:', selectedRadio.id);
+            }
+        }
+
+        function set_nickname() {
+            const entry = document.getElementById('nickenter');
+            let nickname = entry.value;
+            
+            if (nickname.trim() === '') {
+                notify('Settings Error', 'Please enter a username');
+                return;
+            }
+            
+            window.parent.postMessage({
+                type: 'BATCHOS_API',
+                action: 'SET_USERNAME',
+                data: {
+                    text: nickname
+                }
+            }, '*');
+            
+            notify('Settings', `Your username changed to ${nickname}.`);
+        }
+
+        function applyglass() {
+            const selectedGlassRadio = document.querySelector('input[name="tbg"]:checked');
+            let glass_enabled_pereodic = false;
+            if (selectedGlassRadio.id == 'tbg2') {
+                glass_enabled_pereodic = true;
+            }
+
+            window.parent.postMessage({
+                type: 'BATCHOS_API',
+                action: 'SET_GLASS_EFFECT',
+                data: {
+                    status: glass_enabled_pereodic
+                }
+            }, '*');
+        } 
+
+        function resetxfinder() {
+            if (confirm('Are you sure you want to reset XFinder? You will need to reinstall all apps.')) {
+                window.parent.postMessage({
+                    type: 'BATCHOS_API',
+                    action: 'RESET_XFINDER'
+                }, '*');
+                notify('XFinder', 'XFinder has been reset successfully. Please reinstall your apps.');
+            }
+        }
+
+        function applyinstantwallpaper() {
+            let instid = document.getElementById('instwallp_input').value;
+            if (instid == '') {
+                notify('Settings Error', 'Please enter a filename!');
+            } else {
+                window.parent.postMessage({
+                    type: 'BATCHOS_API',
+                    action: 'SET_WALLPAPER',
+                    data: {
+                        wallpaper_id: instid
+                    }
+                }, '*');
+            }
+        }
+        /////////////////////CURSOR JS CODE/////////////////////////////
+        const cursor = document.querySelector('.custom-cursor');
+        
+        document.addEventListener('mousemove', (e) => {
+            cursor.style.left = e.clientX + 'px';
+            cursor.style.top = e.clientY + 'px';
+        });
+
+        document.addEventListener('mouseout', (e) => {
+            if (!e.relatedTarget) {
+                cursor.style.opacity = '0';
+            }
+        });
+
+        document.addEventListener('mouseover', () => {
+            cursor.style.opacity = '1';
+        });
+        //////////////////////DONT DELETE//////////////////////////////
+    </script>
+</body>
+</html>

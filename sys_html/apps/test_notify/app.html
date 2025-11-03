@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test</title>
+</head>
+<body>
+    <input type="text" id="input_1" placeholder="Enter a title of the message">
+    <input type="text" id="input_2" placeholder="Enter a subtitle of the message">
+    <button onclick="test_notification()">Test!</button>
+</body>
+<script>
+    const one = document.getElementById('input_1');
+    const two = document.getElementById('input_2');
+
+    function notify(title, subtitle) {
+        window.parent.postMessage({
+            type: 'BATCHOS_API',
+            action: 'SHOW_NOTIFY',
+            data: {
+                notif_title: title,
+                notif_subtitle: subtitle
+            }
+        }, '*');
+    }
+
+    function test_notification() {
+        notify(one.value, two.value)
+    }
+</script>
+</html>

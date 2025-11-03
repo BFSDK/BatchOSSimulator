@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terminal</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Consolas', 'Lucida Console', monospace;
+        }
+        
+        body {
+            background-color: #000;
+            color: #ccc;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .cmd-container {
+            flex: 1;
+            padding: 10px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .cmd-line {
+            display: flex;
+            margin-bottom: 5px;
+        }
+        
+        .prompt {
+            margin-right: 5px;
+            white-space: nowrap;
+        }
+        
+        .input-line {
+            display: flex;
+            align-items: center;
+        }
+        
+        .cmd-input {
+            background: transparent;
+            border: none;
+            color: #ccc;
+            font-size: 16px;
+            outline: none;
+            flex: 1;
+            caret-color: #ccc;
+        }
+        
+        .output {
+            white-space: pre-wrap;
+            margin-bottom: 5px;
+        }
+        
+        .error {
+            color: #ff5555;
+        }
+        
+        .success {
+            color: #55ff55;
+        }
+        
+        .info {
+            color: #5555ff;
+        }
+        
+        .blink {
+            animation: blink 1s infinite;
+        }
+        
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+        
+        .help-table {
+            margin-top: 10px;
+            border-collapse: collapse;
+            width: 100%;
+        }
+        
+        .help-table th, .help-table td {
+            border: 1px solid #555;
+            padding: 5px;
+            text-align: left;
+        }
+        
+        .help-table th {
+            background-color: #222;
+        }
+    </style>
+</head>
+<body>
+    <div class="cmd-container" id="cmd-container">
+        <div class="output">
+            The BatchOS Legacy [ver0.0.0.1 alpha]<br>
+            BatchOS Terminal; Version 1.0.0 (Codename: TermiLegacy Pacman)<br><br>
+        </div>
+        <div class="cmd-line input-line">
+            <span class="prompt">$batchos/terminal/&gt;</span>
+            <input type="text" class="cmd-input" id="cmd-input" autofocus>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const cmdInput = document.getElementById('cmd-input');
+            const cmdContainer = document.getElementById('cmd-container');
+            
+            let commandHistory = [];
+            let historyIndex = -1;
+            let currentPath = 'C:\\Users\\User';
+            
+            // Фокус на поле ввода при клике в любом месте
+            cmdContainer.addEventListener('click', function() {
+                cmdInput.focus();
+            });
+            
+            // Обработка ввода команд
+            cmdInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    processCommand(cmdInput.value);
+                    commandHistory.push(cmdInput.value);
+                    historyIndex = commandHistory.length;
+                    cmdInput.value = '';
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    if (commandHistory.length > 0) {
+                        if (historyIndex > 0) historyIndex--;
+                        cmdInput.value = commandHistory[historyIndex] || '';
+                    }
+                } else if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    if (historyIndex < commandHistory.length - 1) {
+                        historyIndex++;
+                        cmdInput.value = commandHistory[historyIndex] || '';
+                    } else {
+                        historyIndex = commandHistory.length;
+                        cmdInput.value = '';
+                    }
+                }
+            });
+            
+            // Функция обработки команд
+            function processCommand(cmd) {
+                const inputLine = document.querySelector('.input-line');
+                const outputDiv = document.createElement('div');
+                outputDiv.className = 'output';
+                
+                // Создаем новую строку для вывода команды
+                const commandOutput = document.createElement('div');
+                commandOutput.className = 'cmd-line';
+                commandOutput.innerHTML = `<span class="prompt">${currentPath}&gt;</span> ${cmd}`;
+                
+                // Добавляем вывод команды перед полем ввода
+                cmdContainer.insertBefore(commandOutput, inputLine);
+                
+                // Обрабатываем команду
+                const args = cmd.trim().split(' ');
+                const command = args[0].toLowerCase();
+                
+                let result = '';
+                
+                switch(command) {
+                    case 'help':
+                        result = `List of avaible commands:
+  help     - show this menu
+  cls      - clear screen
+  echo     - show text
+  time     - show current time
+  date     - show current date
+  ver      - show Terminal and BatchOS version
+  color    - edit text color
+  rename   - rename file in main:// directory
+  copy     - copy file in main:// directory
+  del      - delete the file in main:// directory
+  mkfile   - create the file in main:// directory`;
+                        break;
+                        
+                    case 'dir':
+                        result = ` Содержимое каталога ${currentPath}\n\n`;
+                        result += ` ${getCurrentDate()}  ${getCurrentTime()}    <DIR>          .\n`;
+                        result += ` ${getCurrentDate()}  ${getCurrentTime()}    <DIR>          ..\n`;
+                        result += ` ${getCurrentDate()}  ${getCurrentTime()}    <DIR>          Documents\n`;
+                        result += ` ${getCurrentDate()}  ${getCurrentTime()}    <DIR>          Downloads\n`;
+                        result += ` ${getCurrentDate()}  ${getCurrentTime()}    <DIR>          Desktop\n`;
+                        result += ` ${getCurrentDate()}  ${getCurrentTime()}           1,024 file.txt\n`;
+                        result += ` ${getCurrentDate()}  ${getCurrentTime()}           2,048 data.doc\n`;
+                        result += ` ${getCurrentDate()}  ${getCurrentTime()}             512 notes.txt\n\n`;
+                        result += `               3 файлов          3,584 байт\n`;
+                        result += `               5 папок   15,432,654,848 байт свободно`;
+                        break;
+                        
+                    case 'cd':
+                        if (args.length === 1) {
+                            result = currentPath;
+                        } else {
+                            const newPath = args[1];
+                            if (newPath === '..') {
+                                const pathParts = currentPath.split('\\');
+                                if (pathParts.length > 1) {
+                                    pathParts.pop();
+                                    currentPath = pathParts.join('\\');
+                                }
+                                result = currentPath;
+                            } else if (newPath === 'Documents' || newPath === 'Downloads' || newPath === 'Desktop') {
+                                currentPath = currentPath + '\\' + newPath;
+                                result = currentPath;
+                            } else {
+                                result = `Системе не удается найти указанный путь.`;
+                            }
+                        }
+                        break;
+                        
+                    case 'cls':
+                        const outputs = document.querySelectorAll('.output, .cmd-line');
+                        outputs.forEach(el => {
+                            if (!el.classList.contains('input-line')) {
+                                el.remove();
+                            }
+                        });
+                        cmdInput.focus();
+                        return;
+                        
+                    case 'echo':
+                        if (args.length > 1) {
+                            result = args.slice(1).join(' ');
+                        } else {
+                            result = 'ECHO is on.';
+                        }
+                        break;
+                        
+                    case 'time':
+                        result = `Текущее время: ${getCurrentTime()}`;
+                        break;
+                        
+                    case 'date':
+                        result = `Текущая дата: ${getCurrentDate()}`;
+                        break;
+                        
+                    case 'ver':
+                        result = `Microsoft Windows [Version 10.0.19042.1237]`;
+                        break;
+                        
+                    case 'exit':
+                        result = 'Завершение работы...';
+                        setTimeout(() => {
+                            document.body.innerHTML = '<div style="color: white; text-align: center; padding: 50px;">Сеанс завершен</div>';
+                        }, 1000);
+                        break;
+                        
+                    case 'color':
+                        if (args.length > 1) {
+                            const colorCode = args[1];
+                            const colorMap = {
+                                '0': 'black', '1': 'blue', '2': 'green', '3': 'aqua',
+                                '4': 'red', '5': 'purple', '6': 'yellow', '7': 'white',
+                                '8': 'gray', '9': 'lightblue', 'a': 'lightgreen',
+                                'b': 'lightaqua', 'c': 'lightred', 'd': 'lightpurple',
+                                'e': 'lightyellow', 'f': 'brightwhite'
+                            };
+                            
+                            if (colorCode in colorMap) {
+                                document.body.style.color = colorMap[colorCode];
+                                result = `Цвет текста изменен на ${colorMap[colorCode]}`;
+                            } else {
+                                result = `Неверный код цвета. Используйте команду "help color" для справки.`;
+                            }
+                        } else {
+                            result = `Текущий цвет: белый\nИспользование: COLOR [атрибут]\n\nАтрибут определяет цвет фона и текста консоли.\n\n0 = Черный       8 = Серый\n1 = Синий        9 = Светло-синий\n2 = Зеленый      A = Светло-зеленый\n3 = Голубой      B = Светло-голубой\n4 = Красный      C = Светло-красный\n5 = Фиолетовый   D = Светло-фиолетовый\n6 = Желтый       E = Светло-желтый\n7 = Белый        F = Ярко-белый\n\nНапример, "COLOR 1F" задает синий фон и белый текст.`;
+                        }
+                        break;
+                        
+                    case 'ping':
+                        result = `Обмен пакетами с 8.8.8.8 по 32 байт данных:\n`;
+                        for (let i = 1; i <= 4; i++) {
+                            const time = Math.floor(Math.random() * 50) + 10;
+                            result += `Ответ от 8.8.8.8: число байт=32 время=${time}мс TTL=54\n`;
+                        }
+                        
+                        result += `\nСтатистика Ping для 8.8.8.8:\n`;
+                        result += `    Пакетов: отправлено = 4, получено = 4, потеряно = 0\n`;
+                        result += `    (0% потерь)\n`;
+                        result += `Приблизительное время приема-передачи в мс:\n`;
+                        result += `    Минимальное = 10мсек, Максимальное = 59мсек, Среднее = 34мсек`;
+                        break;
+                        
+                    case 'tree':
+                        result = `Структура папок тома WINDOWS\n`;
+                        result += `Том серийный номер: 1234-ABCD\n`;
+                        result += `${currentPath}\n`;
+                        result += `├───Documents\n`;
+                        result += `│   ├───Work\n`;
+                        result += `│   └───Personal\n`;
+                        result += `├───Downloads\n`;
+                        result += `│   ├───Software\n`;
+                        result += `│   └───Media\n`;
+                        result += `└───Desktop\n`;
+                        result += `    ├───Shortcuts\n`;
+                        result += `    └───Files`;
+                        break;
+                        
+                    case 'mkdir':
+                        if (args.length > 1) {
+                            result = `Создана директория: ${args[1]}`;
+                        } else {
+                            result = `Синтаксис команды неверен.`;
+                        }
+                        break;
+                        
+                    case 'rmdir':
+                        if (args.length > 1) {
+                            result = `Директория "${args[1]}" удалена.`;
+                        } else {
+                            result = `Синтаксис команды неверен.`;
+                        }
+                        break;
+                        
+                    case 'type':
+                        if (args.length > 1) {
+                            const filename = args[1];
+                            if (filename === 'file.txt') {
+                                result = `Это содержимое файла file.txt.\nОно может содержать любой текст.\nСоздано: ${getCurrentDate()}`;
+                            } else if (filename === 'notes.txt') {
+                                result = `Заметки:\n- Сделать домашнее задание\n- Купить продукты\n- Позвонить другу`;
+                            } else {
+                                result = `Не удается найти файл "${filename}".`;
+                            }
+                        } else {
+                            result = `Синтаксис команды неверен.`;
+                        }
+                        break;
+                        
+                    case 'rename':
+                        if (args.length > 2) {
+                            result = `Файл "${args[1]}" переименован в "${args[2]}".`;
+                        } else {
+                            result = `Синтаксис команды неверен.`;
+                        }
+                        break;
+                        
+                    case 'copy':
+                        if (args.length > 2) {
+                            result = `Скопировано файлов: 1`;
+                        } else {
+                            result = `Синтаксис команды неверен.`;
+                        }
+                        break;
+                        
+                    case 'del':
+                        if (args.length > 1) {
+                            result = `Файл "${args[1]}" удален.`;
+                        } else {
+                            result = `Синтаксис команды неверен.`;
+                        }
+                        break;
+                        
+                    case 'vol':
+                        result = ` Метка тома в диске C: WINDOWS\n Серийный номер тома: 1234-ABCD`;
+                        break;
+                        
+                    case 'tasklist':
+                        result = `Имя образа                 PID Имя сессии     № сессии    Память\n`;
+                        result += `========================= ====== ================ =========== ========\n`;
+                        result += `System Idle Process          0 Services                   0        8 КБ\n`;
+                        result += `System                       4 Services                   0      256 КБ\n`;
+                        result += `svchost.exe               1234 Services                   0    5,432 КБ\n`;
+                        result += `explorer.exe              2345 Console                    1   12,345 КБ\n`;
+                        result += `cmd.exe                   3456 Console                    1    1,234 КБ\n`;
+                        result += `notepad.exe               4567 Console                    1    2,345 КБ`;
+                        break;
+                        
+                    case 'systeminfo':
+                        result = `Имя хоста:                     USER-PC\n`;
+                        result += `Имя ОС:                        Microsoft Windows 10 Pro\n`;
+                        result += `Версия ОС:                     10.0.19042 Сборка 19042\n`;
+                        result += `Производитель ОС:              Microsoft Corporation\n`;
+                        result += `Конфигурация ОС:               Рабочая станция с поддержкой конечного сервера\n`;
+                        result += `Тип сборки ОС:                 Multiprocessor Free\n`;
+                        result += `Владелец зарегистрированной:   User\n`;
+                        result += `Организация:                   \n`;
+                        result += `Дата установки:                15.10.2020, 12:34:56\n`;
+                        result += `Время загрузки системы:        0:05:32:15\n`;
+                        result += `Процессор(ы):                  1 процессор(ы) - Intel(R) Core(TM) i7-10700 CPU @ 2.90GHz\n`;
+                        result += `Доступная физическая память:   8,192 МБ\n`;
+                        result += `Всего физической памяти:       16,384 МБ\n`;
+                        result += `Виртуальная память: макс. размер: 18,432 МБ\n`;
+                        result += `Виртуальная память: доступно:   12,345 МБ\n`;
+                        result += `Виртуальная память: используется: 6,087 МБ`;
+                        break;
+                        
+                    case '':
+                        // Пустая команда, ничего не делаем
+                        break;
+                        
+                    default:
+                        result = `"${cmd}" не является внутренней или внешней командой, исполняемой программой или пакетным файлом.`;
+                        outputDiv.classList.add('error');
+                }
+                
+                // Добавляем результат выполнения команды
+                outputDiv.textContent = result;
+                cmdContainer.insertBefore(outputDiv, inputLine);
+                
+                // Прокручиваем контейнер вниз
+                cmdContainer.scrollTop = cmdContainer.scrollHeight;
+                
+                // Возвращаем фокус на поле ввода
+                cmdInput.focus();
+            }
+            
+            // Вспомогательные функции для получения времени и даты
+            function getCurrentTime() {
+                const now = new Date();
+                return now.toLocaleTimeString('ru-RU', {hour12: false});
+            }
+            
+            function getCurrentDate() {
+                const now = new Date();
+                return now.toLocaleDateString('ru-RU');
+            }
+        });
+    </script>
+</body>
+</html>

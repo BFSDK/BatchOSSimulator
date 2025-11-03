@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paint</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        /* DONT DELETE!!! Styles for cursor! */
+        * {
+            cursor: none !important;
+        }
+
+        .custom-cursor {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 32px;
+            height: 32px;
+            pointer-events: none;
+            z-index: 9999;
+            background-image: url('../../bin/cur/cursor.png'); /* path to system cursor, you can make path to your cursor */
+            background-size: cover;
+        }
+        /* End of styles for cursors */
+
+        body {
+            background: #2d2d30;
+            color: #fff;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .paint-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            background: #2d2d30;
+        }
+
+        .menu-bar {
+            background: #333;
+            border-bottom: 1px solid #444;
+            padding: 2px 0;
+            display: flex;
+            font-size: 13px;
+        }
+
+        .menu-item {
+            padding: 4px 12px;
+            cursor: pointer;
+            position: relative;
+            color: #fff;
+            transition: background-color 0.2s;
+        }
+
+        .menu-item:hover {
+            background: #444;
+        }
+
+        .menu-item.active {
+            background: #555;
+        }
+
+        .dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: #333;
+            border: 1px solid #555;
+            min-width: 150px;
+            box-shadow: 2px 2px 10px rgba(0,0,0,0.5);
+            display: none;
+            z-index: 1000;
+        }
+
+        .dropdown-item {
+            padding: 6px 12px;
+            cursor: pointer;
+            font-size: 12px;
+            color: #fff;
+            transition: background-color 0.2s;
+        }
+
+        .dropdown-item:hover {
+            background: #0078d4;
+            color: white;
+        }
+
+        .dropdown-divider {
+            height: 1px;
+            background: #555;
+            margin: 2px 0;
+        }
+
+        .toolbar {
+            background: #333;
+            border-bottom: 1px solid #444;
+            padding: 8px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .tool-group {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+            padding: 4px 8px;
+            border-right: 1px solid #555;
+        }
+
+        .tool-group:last-child {
+            border-right: none;
+        }
+
+        .tool-button {
+            width: 32px;
+            height: 32px;
+            border: 1px solid #555;
+            border-radius: 4px;
+            background: #444;
+            color: #fff;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            transition: all 0.2s;
+        }
+
+        .tool-button:hover {
+            background: #555;
+            border-color: #666;
+        }
+
+        .tool-button.active {
+            background: #0078d4;
+            border-color: #0078d4;
+        }
+
+        .color-picker {
+            width: 32px;
+            height: 32px;
+            border: 1px solid #555;
+            border-radius: 4px;
+            cursor: pointer;
+            padding: 2px;
+        }
+
+        .brush-size {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #ccc;
+            font-size: 12px;
+        }
+
+        .brush-size input {
+            width: 80px;
+        }
+
+        .canvas-container {
+            flex: 1;
+            position: relative;
+            background: #1a1a1a;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #paintCanvas {
+            background: white;
+            box-shadow: 0 0 20px rgba(0,0,0,0.3);
+            cursor: crosshair;
+        }
+
+        .status-bar {
+            background: #0078d4;
+            color: white;
+            padding: 4px 8px;
+            font-size: 12px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: #333;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            width: 400px;
+            max-width: 90%;
+            border: 1px solid #555;
+        }
+
+        .modal-header {
+            background: #222;
+            color: #fff;
+            padding: 12px 16px;
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+            font-weight: bold;
+            border-bottom: 1px solid #555;
+        }
+
+        .modal-body {
+            padding: 16px;
+            background: #333;
+        }
+
+        .modal-footer {
+            padding: 12px 16px;
+            background: #222;
+            border-bottom-left-radius: 8px;
+            border-bottom-right-radius: 8px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            border-top: 1px solid #555;
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 4px;
+            font-weight: 500;
+            color: #fff;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 6px 8px;
+            border: 1px solid #555;
+            border-radius: 4px;
+            font-size: 14px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+
+        .form-control:focus {
+            border-color: #0078d4;
+            outline: none;
+        }
+
+        .btn {
+            padding: 6px 16px;
+            border: 1px solid #555;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            background: #333;
+            color: #fff;
+            transition: background-color 0.2s;
+        }
+
+        .btn-primary {
+            background: #0078d4;
+            color: white;
+            border-color: #0078d4;
+        }
+
+        .btn:hover {
+            background: #444;
+        }
+
+        .btn-primary:hover {
+            background: #106ebe;
+        }
+
+        .file-list {
+            border: 1px solid #555;
+            border-radius: 4px;
+            max-height: 200px;
+            overflow-y: auto;
+            background: #1a1a1a;
+        }
+
+        .file-item {
+            padding: 8px 12px;
+            cursor: pointer;
+            border-bottom: 1px solid #333;
+            font-size: 13px;
+            transition: background-color 0.2s;
+        }
+
+        .file-item:hover {
+            background: #333;
+        }
+
+        .file-item:last-child {
+            border-bottom: none;
+        }
+
+        .file-name {
+            font-weight: 500;
+            color: #fff;
+        }
+
+        .file-date {
+            font-size: 11px;
+            color: #999;
+            margin-top: 2px;
+        }
+
+        .empty-state {
+            padding: 20px;
+            text-align: center;
+            color: #666;
+            font-style: italic;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #333;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #555;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #666;
+        }
+
+        .color-palette {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+            max-width: 160px;
+        }
+
+        .color-swatch {
+            width: 20px;
+            height: 20px;
+            border: 1px solid #555;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .color-swatch:hover {
+            transform: scale(1.1);
+        }
+
+        .color-swatch.active {
+            border: 2px solid #fff;
+            box-shadow: 0 0 5px rgba(255,255,255,0.5);
+        }
+    </style>
+</head>
+<body>
+    <div class="custom-cursor"></div>
+    <div class="paint-container">
+        <div class="menu-bar">
+            <div class="menu-item" onclick="toggleDropdown('fileDropdown')">
+                File
+                <div class="dropdown" id="fileDropdown">
+                    <div class="dropdown-item" onclick="newCanvas()">New</div>
+                    <div class="dropdown-item" onclick="openFile()">Open...</div>
+                    <div class="dropdown-item" onclick="saveFile()">Save</div>
+                    <div class="dropdown-item" onclick="saveAsFile()">Save As...</div>
+                    <div class="dropdown-divider"></div>
+                    <div class="dropdown-item" onclick="closeApp()">Exit</div>
+                </div>
+            </div>
+            
+            <div class="menu-item" onclick="toggleDropdown('editDropdown')">
+                Edit
+                <div class="dropdown" id="editDropdown">
+                    <div class="dropdown-item" onclick="clearCanvas()">Clear Canvas</div>
+                    <div class="dropdown-item" onclick="undo()">Undo</div>
+                    <div class="dropdown-item" onclick="redo()">Redo</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="toolbar">
+            <div class="tool-group">
+                <button class="tool-button active" onclick="setTool('brush')" title="Brush">🖌️</button>
+                <button class="tool-button" onclick="setTool('eraser')" title="Eraser">🧹</button>
+                <button class="tool-button" onclick="setTool('line')" title="Line">📏</button>
+                <button class="tool-button" onclick="setTool('rectangle')" title="Rectangle">⬜</button>
+                <button class="tool-button" onclick="setTool('circle')" title="Circle">⭕</button>
+            </div>
+            
+            <div class="tool-group">
+                <input type="color" class="color-picker" id="colorPicker" value="#000000" onchange="setColor(this.value)">
+                <div class="color-palette">
+                    <div class="color-swatch active" style="background: #000000;" onclick="setColor('#000000')"></div>
+                    <div class="color-swatch" style="background: #ff0000;" onclick="setColor('#ff0000')"></div>
+                    <div class="color-swatch" style="background: #00ff00;" onclick="setColor('#00ff00')"></div>
+                    <div class="color-swatch" style="background: #0000ff;" onclick="setColor('#0000ff')"></div>
+                    <div class="color-swatch" style="background: #ffff00;" onclick="setColor('#ffff00')"></div>
+                    <div class="color-swatch" style="background: #ff00ff;" onclick="setColor('#ff00ff')"></div>
+                    <div class="color-swatch" style="background: #00ffff;" onclick="setColor('#00ffff')"></div>
+                    <div class="color-swatch" style="background: #ffffff;" onclick="setColor('#ffffff')"></div>
+                </div>
+            </div>
+            
+            <div class="tool-group">
+                <div class="brush-size">
+                    <span>Size:</span>
+                    <input type="range" id="brushSize" min="1" max="50" value="5" onchange="setBrushSize(this.value)">
+                    <span id="brushSizeValue">5px</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="canvas-container">
+            <canvas id="paintCanvas" width="800" height="500"></canvas>
+        </div>
+
+        <div class="status-bar">
+            <div id="cursorPos">X: 0, Y: 0</div>
+            <div id="toolInfo">Tool: Brush | Size: 5px</div>
+        </div>
+    </div>
+
+    <!-- Модальные окна -->
+    <div class="modal" id="saveModal">
+        <div class="modal-content">
+            <div class="modal-header">Save Drawing</div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="fileName">File Name:</label>
+                    <input type="text" id="fileName" class="form-control" placeholder="Enter file name">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="closeSaveModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="confirmSave()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="openModal">
+        <div class="modal-content">
+            <div class="modal-header">Open Drawing</div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Select a file:</label>
+                    <div class="file-list" id="fileList"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="closeOpenModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="confirmOpen()" disabled id="openBtn">Open</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="messageModal">
+        <div class="modal-content">
+            <div class="modal-header" id="messageTitle">Message</div>
+            <div class="modal-body">
+                <p id="messageText"></p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" onclick="closeMessageModal()">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Глобальные переменные
+        let currentFileName = null;
+        let selectedFile = null;
+        let isDrawing = false;
+        let lastX = 0;
+        let lastY = 0;
+        let currentTool = 'brush';
+        let currentColor = '#000000';
+        let brushSize = 5;
+        let history = [];
+        let historyIndex = -1;
+        let startX, startY;
+
+        // Инициализация
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Paint initialized');
+            initCanvas();
+            loadSettings();
+            updateToolInfo();
+        });
+
+        function initCanvas() {
+            const canvas = document.getElementById('paintCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Установка белого фона
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Сохраняем начальное состояние в историю
+            saveState();
+            
+            // События мыши
+            canvas.addEventListener('mousedown', startDrawing);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('mouseup', stopDrawing);
+            canvas.addEventListener('mouseout', stopDrawing);
+            canvas.addEventListener('mousemove', updateCursorPosition);
+        }
+
+        function startDrawing(e) {
+            isDrawing = true;
+            const canvas = document.getElementById('paintCanvas');
+            const rect = canvas.getBoundingClientRect();
+            [lastX, lastY] = [e.clientX - rect.left, e.clientY - rect.top];
+            [startX, startY] = [lastX, lastY];
+            
+            if (currentTool === 'brush' || currentTool === 'eraser') {
+                const ctx = canvas.getContext('2d');
+                ctx.beginPath();
+                ctx.moveTo(lastX, lastY);
+            }
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+            
+            const canvas = document.getElementById('paintCanvas');
+            const ctx = canvas.getContext('2d');
+            const rect = canvas.getBoundingClientRect();
+            const currentX = e.clientX - rect.left;
+            const currentY = e.clientY - rect.top;
+            
+            ctx.lineJoin = 'round';
+            ctx.lineCap = 'round';
+            
+            switch(currentTool) {
+                case 'brush':
+                    ctx.strokeStyle = currentColor;
+                    ctx.lineWidth = brushSize;
+                    ctx.globalCompositeOperation = 'source-over';
+                    ctx.lineTo(currentX, currentY);
+                    ctx.stroke();
+                    break;
+                    
+                case 'eraser':
+                    ctx.strokeStyle = 'white';
+                    ctx.lineWidth = brushSize;
+                    ctx.globalCompositeOperation = 'destination-out';
+                    ctx.lineTo(currentX, currentY);
+                    ctx.stroke();
+                    break;
+                    
+                case 'line':
+                case 'rectangle':
+                case 'circle':
+                    // Временное рисование - перерисовываем canvas из последнего состояния
+                    restoreState();
+                    ctx.strokeStyle = currentColor;
+                    ctx.lineWidth = brushSize;
+                    ctx.globalCompositeOperation = 'source-over';
+                    
+                    if (currentTool === 'line') {
+                        ctx.beginPath();
+                        ctx.moveTo(startX, startY);
+                        ctx.lineTo(currentX, currentY);
+                        ctx.stroke();
+                    } else if (currentTool === 'rectangle') {
+                        ctx.strokeRect(startX, startY, currentX - startX, currentY - startY);
+                    } else if (currentTool === 'circle') {
+                        const radius = Math.sqrt(Math.pow(currentX - startX, 2) + Math.pow(currentY - startY, 2));
+                        ctx.beginPath();
+                        ctx.arc(startX, startY, radius, 0, 2 * Math.PI);
+                        ctx.stroke();
+                    }
+                    break;
+            }
+            
+            [lastX, lastY] = [currentX, currentY];
+        }
+
+        function stopDrawing() {
+            if (isDrawing) {
+                isDrawing = false;
+                const ctx = document.getElementById('paintCanvas').getContext('2d');
+                ctx.beginPath();
+                
+                // Сохраняем состояние в историю после завершения рисования
+                if (currentTool !== 'line' && currentTool !== 'rectangle' && currentTool !== 'circle') {
+                    saveState();
+                } else {
+                    // Для фигур сохраняем состояние после того как они нарисованы
+                    setTimeout(saveState, 100);
+                }
+            }
+        }
+
+        function updateCursorPosition(e) {
+            const canvas = document.getElementById('paintCanvas');
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            document.getElementById('cursorPos').textContent = `X: ${Math.round(x)}, Y: ${Math.round(y)}`;
+        }
+
+        // Инструменты
+        function setTool(tool) {
+            currentTool = tool;
+            document.querySelectorAll('.tool-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            updateToolInfo();
+        }
+
+        function setColor(color) {
+            currentColor = color;
+            document.getElementById('colorPicker').value = color;
+            document.querySelectorAll('.color-swatch').forEach(swatch => {
+                swatch.classList.remove('active');
+            });
+            event.target.classList.add('active');
+        }
+
+        function setBrushSize(size) {
+            brushSize = parseInt(size);
+            document.getElementById('brushSizeValue').textContent = size + 'px';
+            updateToolInfo();
+        }
+
+        function updateToolInfo() {
+            const toolNames = {
+                'brush': 'Brush',
+                'eraser': 'Eraser',
+                'line': 'Line',
+                'rectangle': 'Rectangle',
+                'circle': 'Circle'
+            };
+            document.getElementById('toolInfo').textContent = 
+                `Tool: ${toolNames[currentTool]} | Size: ${brushSize}px`;
+        }
+
+        // История действий
+        function saveState() {
+            const canvas = document.getElementById('paintCanvas');
+            history = history.slice(0, historyIndex + 1);
+            history.push(canvas.toDataURL());
+            historyIndex++;
+        }
+
+        function restoreState() {
+            if (historyIndex >= 0) {
+                const canvas = document.getElementById('paintCanvas');
+                const ctx = canvas.getContext('2d');
+                const img = new Image();
+                img.onload = function() {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.drawImage(img, 0, 0);
+                };
+                img.src = history[historyIndex];
+            }
+        }
+
+        function undo() {
+            if (historyIndex > 0) {
+                historyIndex--;
+                restoreState();
+            }
+        }
+
+        function redo() {
+            if (historyIndex < history.length - 1) {
+                historyIndex++;
+                restoreState();
+            }
+        }
+
+        function clearCanvas() {
+            const canvas = document.getElementById('paintCanvas');
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            saveState();
+        }
+
+        function newCanvas() {
+            if (isCanvasModified()) {
+                showDialog('You have unsaved changes. Please save your work before creating a new canvas.', 'Unsaved Changes');
+                return;
+            }
+            
+            clearCanvas();
+            currentFileName = null;
+            // Убрано уведомление об успешном создании
+        }
+
+        // Функции файлов (аналогично Notepad)
+        function showDialog(message, title = 'Message') {
+            console.log('Show dialog:', message);
+            document.getElementById('messageTitle').textContent = title;
+            document.getElementById('messageText').textContent = message;
+            document.getElementById('messageModal').style.display = 'flex';
+        }
+
+        function closeMessageModal() {
+            document.getElementById('messageModal').style.display = 'none';
+        }
+
+        function closeApp() {
+            if (isCanvasModified()) {
+                showDialog('You have unsaved changes. Please save before exiting.', 'Unsaved Changes');
+                return;
+            }
+            
+            window.parent.postMessage({
+                type: 'BATCHOS_API',
+                action: 'CLOSE_WINDOW',
+                data: { windowId: getWindowId() }
+            }, '*');
+        }
+
+        function getWindowId() {
+            const iframe = window.frameElement;
+            return iframe ? iframe.closest('.window')?.id : null;
+        }
+
+        function toggleDropdown(dropdownId) {
+            document.querySelectorAll('.dropdown').forEach(dropdown => {
+                dropdown.style.display = 'none';
+            });
+            
+            document.querySelectorAll('.menu-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            const dropdown = document.getElementById(dropdownId);
+            const menuItem = dropdown.parentElement;
+            
+            dropdown.style.display = 'block';
+            menuItem.classList.add('active');
+        }
+
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.menu-item')) {
+                document.querySelectorAll('.dropdown').forEach(dropdown => {
+                    dropdown.style.display = 'none';
+                });
+                document.querySelectorAll('.menu-item').forEach(item => {
+                    item.classList.remove('active');
+                });
+            }
+        });
+
+        function openFile() {
+            loadFileList();
+            document.getElementById('openModal').style.display = 'flex';
+            selectedFile = null;
+            document.getElementById('openBtn').disabled = true;
+        }
+
+        function saveFile() {
+            if (currentFileName) {
+                performSave(currentFileName);
+            } else {
+                saveAsFile();
+            }
+        }
+
+        function saveAsFile() {
+            document.getElementById('saveModal').style.display = 'flex';
+            document.getElementById('fileName').value = currentFileName || '';
+            document.getElementById('fileName').focus();
+        }
+
+        function closeSaveModal() {
+            document.getElementById('saveModal').style.display = 'none';
+        }
+
+        function closeOpenModal() {
+            document.getElementById('openModal').style.display = 'none';
+        }
+
+        function confirmSave() {
+            const fileName = document.getElementById('fileName').value.trim();
+            if (!fileName) {
+                showDialog('Please enter a file name');
+                return;
+            }
+            
+            performSave(fileName);
+            closeSaveModal();
+        }
+
+        function confirmOpen() {
+            if (selectedFile) {
+                if (isCanvasModified()) {
+                    showDialog('You have unsaved changes. Please save your work before opening another file.', 'Unsaved Changes');
+                    return;
+                }
+                
+                const fileData = getFileFromStorage(selectedFile);
+                if (fileData && fileData.imageData) {
+                    const canvas = document.getElementById('paintCanvas');
+                    const ctx = canvas.getContext('2d');
+                    const img = new Image();
+                    
+                    img.onload = function() {
+                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+                        ctx.drawImage(img, 0, 0);
+                        currentFileName = selectedFile;
+                        // Сбрасываем историю и сохраняем текущее состояние
+                        history = [canvas.toDataURL()];
+                        historyIndex = 0;
+                        closeOpenModal();
+                        // Убрано уведомление об успешном открытии
+                    };
+                    
+                    img.src = fileData.imageData;
+                } else {
+                    showDialog('Error: Invalid file format');
+                }
+            }
+        }
+
+        // Работа с Local Storage
+        function performSave(fileName) {
+            try {
+                const canvas = document.getElementById('paintCanvas');
+                const imageData = canvas.toDataURL('image/png');
+                
+                const fileData = {
+                    imageData: imageData,
+                    lastModified: new Date().toISOString(),
+                    width: canvas.width,
+                    height: canvas.height
+                };
+                
+                const files = JSON.parse(localStorage.getItem('paint_files') || '{}');
+                files[fileName] = fileData;
+                localStorage.setItem('paint_files', JSON.stringify(files));
+                
+                console.log('Drawing saved to localStorage. Current files:', Object.keys(files));
+                
+                currentFileName = fileName;
+                
+                // Убрано уведомление об успешном сохранении
+                
+            } catch (e) {
+                console.error('Save error:', e);
+                showDialog('Error saving file: ' + e.message);
+            }
+        }
+
+        function loadFileList() {
+            try {
+                const files = JSON.parse(localStorage.getItem('paint_files') || '{}');
+                const fileList = document.getElementById('fileList');
+                
+                console.log('Loading file list. Found files:', Object.keys(files));
+                
+                if (Object.keys(files).length === 0) {
+                    fileList.innerHTML = '<div class="empty-state">No saved drawings found</div>';
+                    return;
+                }
+                
+                fileList.innerHTML = '';
+                Object.keys(files).sort().forEach(fileName => {
+                    const fileData = files[fileName];
+                    const fileItem = document.createElement('div');
+                    fileItem.className = 'file-item';
+                    fileItem.onclick = () => selectFile(fileName);
+                    
+                    fileItem.innerHTML = `
+                        <div class="file-name">${fileName}</div>
+                        <div class="file-date">${new Date(fileData.lastModified).toLocaleString()} • ${fileData.width}x${fileData.height}</div>
+                    `;
+                    
+                    fileList.appendChild(fileItem);
+                });
+            } catch (e) {
+                console.error('Load file list error:', e);
+                showDialog('Error loading file list: ' + e.message);
+            }
+        }
+
+        function selectFile(fileName) {
+            selectedFile = fileName;
+            document.querySelectorAll('.file-item').forEach(item => {
+                item.style.background = 'transparent';
+            });
+            event.target.closest('.file-item').style.background = '#444';
+            document.getElementById('openBtn').disabled = false;
+        }
+
+        function getFileFromStorage(fileName) {
+            try {
+                const files = JSON.parse(localStorage.getItem('paint_files') || '{}');
+                console.log('Getting file:', fileName, 'Available files:', Object.keys(files));
+                return files[fileName];
+            } catch (e) {
+                console.error('Get file error:', e);
+                showDialog('Error reading file: ' + e.message);
+                return null;
+            }
+        }
+
+        function isCanvasModified() {
+            // Простая проверка - если есть история изменений, считаем что холст изменен
+            return history.length > 1 || (currentFileName === null && history[0] !== getBlankCanvasData());
+        }
+
+        function getBlankCanvasData() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 800;
+            canvas.height = 500;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            return canvas.toDataURL();
+        }
+
+        function loadSettings() {
+            try {
+                const settings = JSON.parse(localStorage.getItem('paint_settings') || '{}');
+                if (settings.brushSize) {
+                    brushSize = settings.brushSize;
+                    document.getElementById('brushSize').value = brushSize;
+                    document.getElementById('brushSizeValue').textContent = brushSize + 'px';
+                }
+                if (settings.color) {
+                    setColor(settings.color);
+                }
+            } catch (e) {
+                console.error('Load settings error:', e);
+            }
+        }
+
+        function saveSettings() {
+            try {
+                const settings = {
+                    brushSize: brushSize,
+                    color: currentColor
+                };
+                localStorage.setItem('paint_settings', JSON.stringify(settings));
+            } catch (e) {
+                console.error('Save settings error:', e);
+            }
+        }
+
+        // Обработчики клавиш
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.dropdown').forEach(dropdown => {
+                    dropdown.style.display = 'none';
+                });
+                document.querySelectorAll('.menu-item').forEach(item => {
+                    item.classList.remove('active');
+                });
+                
+                if (document.getElementById('saveModal').style.display === 'flex') {
+                    closeSaveModal();
+                }
+                if (document.getElementById('openModal').style.display === 'flex') {
+                    closeOpenModal();
+                }
+                if (document.getElementById('messageModal').style.display === 'flex') {
+                    closeMessageModal();
+                }
+            }
+            
+            if (e.ctrlKey) {
+                switch(e.key) {
+                    case 's':
+                        e.preventDefault();
+                        saveFile();
+                        break;
+                    case 'o':
+                        e.preventDefault();
+                        openFile();
+                        break;
+                    case 'n':
+                        e.preventDefault();
+                        newCanvas();
+                        break;
+                    case 'z':
+                        e.preventDefault();
+                        undo();
+                        break;
+                    case 'y':
+                        e.preventDefault();
+                        redo();
+                        break;
+                }
+            }
+        });
+
+        // Сохраняем настройки при изменении
+        document.getElementById('brushSize').addEventListener('change', saveSettings);
+        document.getElementById('colorPicker').addEventListener('change', saveSettings);
+
+        /////////////////////CURSOR JS CODE/////////////////////////////
+        const cursor = document.querySelector('.custom-cursor');
+        
+        document.addEventListener('mousemove', (e) => {
+            cursor.style.left = e.clientX + 'px';
+            cursor.style.top = e.clientY + 'px';
+        });
+
+        document.addEventListener('mouseout', (e) => {
+            if (!e.relatedTarget) {
+                cursor.style.opacity = '0';
+            }
+        });
+
+        document.addEventListener('mouseover', () => {
+            cursor.style.opacity = '1';
+        });
+        //////////////////////DONT DELETE//////////////////////////////
+    </script>
+</body>
+</html>

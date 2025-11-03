@@ -1,0 +1,1553 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BatchOS</title>
+    <style>
+        * {
+            overflow: hidden;
+            user-select: none;
+            box-sizing: border-box;
+        }
+        @font-face {
+            font-family: 'BatchSans';
+            src: url('bin/fonts/NetflixSans-Rg.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+        }
+        
+        body {
+            background-size: contain;
+            background-image: url('bin/wlp/4.png');
+            margin: 0;
+            padding-bottom: 100px;
+            height: 200vh;
+        }
+
+        /* Добавь в CSS секцию */
+        .window-resize-handle {
+            position: absolute;
+            background: transparent;
+            z-index: 10;
+        }
+
+        .window-resize-n {
+            top: 0;
+            left: 5px;
+            right: 5px;
+            height: 5px;
+            cursor: n-resize;
+        }
+
+        .window-resize-s {
+            bottom: 0;
+            left: 5px;
+            right: 5px;
+            height: 5px;
+            cursor: s-resize;
+        }
+
+        .window-resize-e {
+            top: 5px;
+            right: 0;
+            bottom: 5px;
+            width: 5px;
+            cursor: e-resize;
+        }
+
+        .window-resize-w {
+            top: 5px;
+            left: 0;
+            bottom: 5px;
+            width: 5px;
+            cursor: w-resize;
+        }
+
+        .window-resize-ne {
+            top: 0;
+            right: 0;
+            width: 10px;
+            height: 10px;
+            cursor: ne-resize;
+        }
+
+        .window-resize-nw {
+            top: 0;
+            left: 0;
+            width: 10px;
+            height: 10px;
+            cursor: nw-resize;
+        }
+
+        .window-resize-se {
+            bottom: 0;
+            right: 0;
+            width: 10px;
+            height: 10px;
+            cursor: se-resize;
+        }
+
+        .window-resize-sw {
+            bottom: 0;
+            left: 0;
+            width: 10px;
+            height: 10px;
+            cursor: sw-resize;
+        }
+
+        /* Панель задач */
+        .toolbar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 50px;
+            background-color: rgb(51, 51, 51);
+            border-top-left-radius: 15px;
+            border-top-right-radius: 15px;
+            color: white;
+            display: flex;
+            z-index: 1000;
+            animation: toolbar_start_ani 0.5s ease-out;
+        }
+        @keyframes toolbar_start_ani {
+            0% {
+                transform: translateY(100px);
+            }
+            100% {
+                transform: none;
+            }
+        }
+        .toolbar.withglass {
+            backdrop-filter: blur(10px);
+            background-color: rgba(51, 51, 51, 0.7);
+        }
+
+        .start {
+            background-color: #444;
+            width: 45px;
+            height: 45px;
+            border-radius: 15px;
+            font-size: 50px;
+            text-align: center;
+            line-height: 40px;
+            margin-top: 2.5px;
+            margin-left: 2.5px;
+            transition: 0.1s ease-in-out;
+            cursor: pointer;
+        }
+        .start:hover { background-color: #222; }
+        .start.active { background-color: #222; }
+        .start.active:hover { background-color: #111; }
+
+        .apps_container {
+            width: calc(100% - 137px);
+            height: 100%; 
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 0 10px;
+            font-family: 'BatchSans', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .timedate {
+            font-family: 'BatchSans', Tahoma, Geneva, Verdana, sans-serif;
+            text-align: right;
+            font-size: 13px;
+            height: 100%;
+            width: 80px; 
+            display: grid;
+            align-items: center;
+            transition: 0.1s ease-in-out;
+            padding-left: 3px;
+            padding-right: 3px;
+        }
+        .timedate:hover { background-color: #222; }
+
+        /* Меню Пуск */
+        .start_menu {
+            color: white;
+            border-radius: 15px;
+            background-color: #333;
+            width: 400px;
+            height: 500px;
+            position: fixed;
+            bottom: 52.5px;
+            left: 2.5px;
+            transform: translateY(130%);
+            opacity: 0;
+            transition: 0.5s cubic-bezier(0, -0.01, 0, 1);
+            z-index: 999;
+            overflow: hidden;
+        }
+        .start_menu.active {
+            transform: none;
+            opacity: 1;
+        }
+        .start_menu.active.withglass {
+            transform: none;
+            backdrop-filter: blur(10px);
+            background-color: rgba(51, 51, 51, 0.7);
+        }
+
+        .notification {
+            color: white;
+            border-radius: 15px;
+            background-color: #333;
+            width: 400px;
+            height: 150px;
+            transform: translateY(130%);
+            opacity: 0;
+            transition: 0.5s cubic-bezier(0, -0.01, 0, 1);
+            z-index: 999;
+            position: absolute;
+            right: 2.5px;
+            bottom: 52.5px;
+            z-index: 1000;
+        }
+        .notification.active {
+            transform: none;
+            opacity: 1;
+        }
+
+        .notification.active.withglass {
+            transform: none;
+            backdrop-filter: blur(10px);
+            background-color: rgba(51, 51, 51, 0.7);
+        }
+        
+        .notify-header {
+            font-size: 25px;
+            padding-left: 10px;
+            padding-top: 10px;
+            padding-right: 10px;
+        }
+
+        .notify-text {
+            padding-left: 10px;
+            padding-right: 10px;
+            padding-bottom: 10px;
+        }
+
+        .start_header {
+            padding: 10px;
+            background-color: #222;
+            border-top-left-radius: 15px;
+            border-top-right-radius: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+            height: 40px;
+        }
+
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .setting-button {
+            border-radius: 100px;
+            width: 25px;
+            height: 25px;
+            line-height: 25px;
+            text-align: center;
+            transition: 0.2s ease-in-out;
+            flex-shrink: 0;
+        }
+
+        .setting-button:hover {
+            background-color: #666;
+        }
+
+        .allapps-button {
+            border-radius: 100px;
+            width: 25px;
+            height: 25px;
+            line-height: 25px;
+            text-align: center;
+            transition: 0.2s ease-in-out;
+            flex-shrink: 0;
+        }
+
+        .allapps-button:hover {
+            background-color: #666;
+        }
+
+        .allapps-button.active {
+            background-color: #666;
+        }
+
+        .back-button {
+            border-radius: 100px;
+            width: 25px;
+            height: 25px;
+            line-height: 25px;
+            text-align: center;
+            transition: 0.2s ease-in-out;
+            flex-shrink: 0;
+            display: none;
+        }
+
+        .back-button:hover {
+            background-color: #666;
+        }
+
+        .search-container {
+            display: none;
+            flex: 1;
+            margin: 0 10px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 5px 10px;
+            border-radius: 15px;
+            border: none;
+            background: #444;
+            color: white;
+            font-family: 'BatchSans', Tahoma, Geneva, Verdana, sans-serif;
+            outline: none;
+        }
+
+        .search-input::placeholder {
+            color: #aaa;
+        }
+
+        .app-list-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+            max-height: calc(100% - 40px);
+            transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+        }
+
+        .all-apps-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+            max-height: calc(100% - 40px);
+            transform: translateX(100%);
+            opacity: 0;
+            position: absolute;
+            top: 40px;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+        }
+
+        .all-apps-container.active {
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        .app-list-container.hidden {
+            transform: translateX(-100%);
+            opacity: 0;
+        }
+
+        /* Стилизация скроллбара для Webkit браузеров (Chrome, Safari, Edge) */
+        .app-list-container::-webkit-scrollbar,
+        .all-apps-container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .app-list-container::-webkit-scrollbar-track,
+        .all-apps-container::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+
+        .app-list-container::-webkit-scrollbar-thumb,
+        .all-apps-container::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+        }
+
+        .app-list-container::-webkit-scrollbar-thumb:hover,
+        .all-apps-container::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        /* Для Firefox */
+        .app-list-container,
+        .all-apps-container {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255, 255, 255, 0.3) rgba(255, 255, 255, 0.1);
+        }
+
+        .app-list {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            min-height: min-content;
+        }
+
+        .app-item {
+            padding: 15px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            text-align: center;
+            position: relative;
+        }
+        .app-item:hover {
+            background-color: #444;
+        }
+
+        .all-apps-list {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .all-app-item {
+            padding: 10px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .all-app-item:hover {
+            background-color: #444;
+        }
+
+        .all-app-icon {
+            font-size: 16px;
+            width: 20px;
+            text-align: center;
+        }
+
+        .all-app-name {
+            flex: 1;
+        }
+
+        /* Контекстное меню */
+        .context-menu {
+            position: fixed;
+            background: #333;
+            border-radius: 8px;
+            padding: 5px 0;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            z-index: 10000;
+            min-width: 120px;
+            display: none;
+        }
+
+        .context-menu-item {
+            padding: 8px 15px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            font-size: 14px;
+        }
+
+        .context-menu-item:hover {
+            background-color: #444;
+        }
+
+        .context-menu-item.delete {
+            color: #ff4444;
+            font-family: 'BatchSans', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .context-menu-item.delete:hover {
+            background-color: #ff4444;
+            color: white;
+        }
+
+        /* Оконная система */
+        #windowsContainer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: calc(100% - 50px);
+            pointer-events: none;
+            z-index: 100;
+            font-family: 'BatchSans', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .window {
+            position: absolute;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            min-width: 300px;
+            min-height: 200px;
+            pointer-events: all;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .window-header {
+            background: #333;
+            color: white;
+            padding: 10px 15px;
+            cursor: move;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            user-select: none;
+        }
+        .window-header.withglass {
+            backdrop-filter: blur(10px);
+            background-color: rgba(51, 51, 51, 0.7);
+        }
+
+        .window-title {
+            font-weight: bold;
+        }
+
+        .window-controls {
+            display: flex;
+            gap: 5px;
+        }
+
+        .window-control {
+            width: 20px;
+            height: 20px;
+            border-radius: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background-color 0.2s;
+        }
+
+        .window-minimize { background: #2f2f2f; }
+        .window-maximize { background: #2f2f2f; }
+        .window-close { background: #2f2f2f; }
+
+        .window-control:hover {
+            filter: brightness(1.2);
+        }
+
+        .window-content {
+            flex: 1;
+            overflow: hidden;
+            background: white;
+        }
+
+        .content {
+            font-family: 'BatchSans', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+        }
+
+        .window iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: white;
+        }
+
+        .window.maximized {
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: calc(100%) !important;
+            border-radius: 0;
+        }
+
+        /* Кнопка приложения на панели задач */
+        .taskbar-app {
+            margin-left: 2.5px;
+            margin-top: 2.5px;
+            margin-bottom: 2.5px;
+            border-radius: 8px;
+            height: calc(100% - 5px);
+            cursor: pointer;
+            background: #444;
+            font-size: 12px;
+            white-space: nowrap;
+            max-width: 150px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+        }
+        .taskbar-app:hover {
+            background: #555;
+        }
+        .taskbar-app.active {
+            background: #666;
+        }
+
+        /* Панель поиска для All Apps */
+        .all-apps-search-container {
+            padding: 10px;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #444;
+        }
+
+        .all-apps-search-input {
+            width: 100%;
+            padding: 8px 12px;
+            border-radius: 20px;
+            border: none;
+            background: #444;
+            color: white;
+            font-family: 'BatchSans', Tahoma, Geneva, Verdana, sans-serif;
+            outline: none;
+        }
+
+        .all-apps-search-input::placeholder {
+            color: #aaa;
+        }
+        * {
+            cursor: none !important;
+        }
+
+        .custom-cursor {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 32px;
+            height: 32px;
+            pointer-events: none;
+            z-index: 9999;
+            background-image: url('bin/cur/cursor.png');
+            background-size: cover;
+        }
+
+        .custom-cursor.pointer {
+            background-image: url('bin/cur/cursor-pointer.png');
+        }
+
+        .custom-cursor.move {
+            background-image: url('bin/cur/cursor-move.png');
+        }
+
+        .custom-cursor.text {
+            background-image: url('bin/cur/cursor-text.png');
+        }
+
+        .custom-cursor.resize-e {
+            background-image: url('bin/cur/cursor-hor.png');
+        }
+
+        .custom-cursor.resize-w {
+            background-image: url('bin/cur/cursor-hor.png');
+        }
+
+        .custom-cursor.resize-n {
+            background-image: url('bin/cur/cursor-ver.png');
+        }
+
+        .custom-cursor.resize-s {
+            background-image: url('bin/cur/cursor-ver.png');
+        }
+
+        .custom-cursor.resize-ne {
+            background-image: url('bin/cur/cursor-dio1.png');
+        }
+
+        .custom-cursor.resize-nw {
+            background-image: url('bin/cur/cursor-dio2.png');
+        }
+
+        .custom-cursor.resize-se {
+            background-image: url('bin/cur/cursor-dio1.png');
+        }
+
+        .custom-cursor.resize-sw {
+            background-image: url('bin/cur/cursor-dio2.png');
+        }
+
+        /* Скрываем курсор над iframe */
+        iframe {
+            cursor: none;
+        }
+
+        @media (max-width: 768px) {
+            .custom-cursor {
+                display: none;
+            }
+            body, a, button {
+                cursor: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="custom-cursor"></div>
+    <div class="content">
+        <div class="start_menu" id="stm">
+            <div class="start_header">
+                <div id="start_nickname">
+                    User
+                </div>
+                <div class="header-controls">
+                    <div class="allapps-button" id="allAppsButton" onclick="toggleAllApps()" title="All Apps">
+                        ≡
+                    </div>
+                    <div class="setting-button" onclick="settings_on_start()" title="Settings">
+                        ☼
+                    </div>
+                </div>
+            </div>
+            <div class="app-list-container" id="appListContainer">
+                <div class="app-list" id="appList">
+                    <!-- Приложения будут добавляться динамически -->
+                </div>
+            </div>
+            <div class="all-apps-container" id="allAppsContainer">
+                <div class="all-apps-search-container">
+                    <input type="text" class="all-apps-search-input" id="allAppsSearchInput" placeholder="Search apps...">
+                </div>
+                <div class="all-apps-list" id="allAppsList">
+                    <!-- Все приложения будут добавляться динамически -->
+                </div>
+            </div>
+        </div>
+        <div class="notification" id="notififi">
+            <div class="notify-header" id="ntf_tit">Notify header</div>
+            <div class="notify-text" id="ntf_txt">The notify text!</div>
+        </div>
+    </div>
+    
+    <!-- Контекстное меню -->
+    <div class="context-menu" id="contextMenu">
+        <div class="context-menu-item delete" onclick="deleteApp()">Delete</div>
+    </div>
+    
+    <!-- Контейнер для окон -->
+    <div id="windowsContainer"></div>
+    
+    <!-- Панель задач -->
+    <div id="tlbr" class="toolbar">
+        <div id="stbut" onclick="start_pressed()" class="start">
+            ○
+        </div>
+        <div class="apps_container" id="taskbarApps">
+            <!-- Тут короче приложения запущенные будут -->
+        </div>
+        <div class="timedate" id="datetime">
+            <div class="timedate_container">
+                <div class="time" id="time">XX:XX:XX</div>
+                <div class="date" id="date">XX:XX:XXXX</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Глобальные переменные ОС
+        const BatchOS = {
+            windows: [],
+            apps: [],
+            zIndex: 100,
+            currentContextApp: null, // Текущее приложение для контекстного меню
+            isAllAppsView: false, // Флаг для отслеживания текущего вида
+            
+            
+            loadAppsFromStorage: function() {
+                const savedApps = localStorage.getItem('batchos_installed_apps');
+                if (savedApps) {
+                    try {
+                        this.apps = JSON.parse(savedApps);
+                        console.log('Apps loaded from storage:', this.apps);
+                    } catch (e) {
+                        console.error('Error loading apps from storage:', e);
+                        this.apps = [];
+                    }
+                }
+            },
+            
+            
+            saveAppsToStorage: function() {
+                localStorage.setItem('batchos_installed_apps', JSON.stringify(this.apps));
+                console.log('Apps saved to storage:', this.apps);
+            },
+            
+            
+            isDefaultApp: function(appId) {
+                const defaultApps = ['settings', 'terminal', 'about', 'notepad', 'explorer', 'calculator', 'marketplace'];
+                return defaultApps.includes(appId);
+            },
+            
+            
+            API: {
+                showDialog: (message) => {
+                    alert(`App Dialog: ${message}`);
+                },
+                getSystemInfo: () => {
+                    return {
+                        version: 'BatchOS 1.0',
+                        user: 'User',
+                        time: new Date().toLocaleTimeString()
+                    };
+                },
+                closeWindow: (windowId) => {
+                    BatchOS.closeWindow(windowId);
+                },
+                set_walp: (wallpaper_id) => {
+                    document.body.style.backgroundImage = "url('bin/wlp/" + wallpaper_id + ".png')";
+                },
+                set_nickname: (nick) => {
+                    localStorage.setItem('username', nick);
+                },
+                
+            }
+        };
+
+        
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'BATCHOS_API') {
+                const { action, data } = event.data;
+                
+                console.log('Received message from app:', action, data);
+                
+                switch(action) {
+                    case 'SET_WALLPAPER':
+                        localStorage.setItem('wallpaper_type', 'urled')
+                        document.body.style.backgroundImage = `url('bin/wlp/${data.wallpaper_id}.png')`;
+                        localStorage.setItem('wallpaper_id', data.wallpaper_id)
+                        break;
+                    case 'SET_CUSTOM_WALLPAPER':
+                        localStorage.setItem('wallpaper_type', 'linked');
+                        document.body.style.backgroundImage = `url('${data.wallpaper_link}')`;
+                        localStorage.setItem('wallpaper_linked_link', data.wallpaper_link);
+                        break;
+                    case 'SHOW_DIALOG':
+                        alert(`App Dialog: ${data.message}`);
+                        break;
+                    case 'RESET_XFINDER':
+                        alert('Xfinder apps list reseted. You can reinstall apps in marketplace. Restart system to apply changes!');
+                        
+                        
+                        localStorage.removeItem('batchos_installed_apps');
+                        loadApps(); // Эта функция сама загрузит стандартные приложения и перерисует меню
+                        
+                        console.log('Apps list reset to default');
+                        break;
+                    case 'WRITE':
+                        console.log('App:', data.text);
+                        break;
+                    case 'SET_GLASS_EFFECT':
+                        localStorage.setItem('is_glass_enabled', data.status.toString());
+                        // Удаляем эти строки:
+                        // is_glass_enabled = data.status;
+                        // 
+                        // // Обновляем интерфейс сразу
+                        // if (data.status) {
+                        //     start_menu.classList.add('withglass');
+                        //     tool_bar.classList.add('withglass');
+                        //     notify_panel.classList.add('withglass');
+                        // } else {
+                        //     start_menu.classList.remove('withglass');
+                        //     tool_bar.classList.remove('withglass');
+                        //     notify_panel.classList.remove('withglass');
+                        // }
+
+                        // Вместо них добавляем:
+                        const startMenu = document.getElementById('stm');
+                        const toolbar = document.getElementById('tlbr');
+                        const notifyPanel = document.getElementById('notififi');
+                        
+                        if (data.status) {
+                            startMenu.classList.add('withglass');
+                            toolbar.classList.add('withglass');
+                            notifyPanel.classList.add('withglass');
+                        } else {
+                            startMenu.classList.remove('withglass');
+                            toolbar.classList.remove('withglass');
+                            notifyPanel.classList.remove('withglass');
+                        }
+                        break;
+                    case 'SET_USERNAME':
+                        localStorage.setItem('username', data.text);
+                        start_username.textContent = data.text;
+                        break;
+                    case 'SHOW_NOTIFY':
+                        const notifybar = document.getElementById('notififi');
+                        const title_notif = document.getElementById('ntf_tit');
+                        const subtitle = document.getElementById('ntf_txt');
+                        title_notif.textContent = data.notif_title;
+                        subtitle.textContent = data.notif_subtitle;
+                        function sleep(ms) {
+                            return new Promise(resolve => setTimeout(resolve, ms));
+                        }
+                        async function main_notify() {
+                            notifybar.classList.add('active');
+                            await sleep(5000);
+                            notifybar.classList.remove('active');
+                        }
+                        main_notify();
+                        break;
+
+                    case 'TEST':
+                        console.log('Test message received from app');
+                        alert('Тест успешен! Сообщение из приложения получено!');
+                        break;
+                    case 'BATCHOS_APP_INSTALL':
+                        console.log('Installing app:', data);
+                        
+                        
+                        if (!data.id || !data.name || !data.path) {
+                            console.error('Invalid app data:', data);
+                            break;
+                        }
+                        
+                        
+                        const existingAppIndex = BatchOS.apps.findIndex(app => app.id === data.id);
+                        if (existingAppIndex === -1) {
+                            
+                            BatchOS.apps.push({
+                                id: data.id,
+                                name: data.name,
+                                path: data.path,
+                                icon: data.icon || '❓'
+                            });
+                            
+                            
+                            BatchOS.saveAppsToStorage();
+                            
+                            
+                            renderAppList();
+                            renderAllAppsList();
+                            
+                            console.log(`"${data.name}" installed successfully!`);
+                        }
+                        break;
+
+                    case 'BATCHOS_APP_UNINSTALL':
+                        console.log('Uninstalling app:', data);
+                        
+                        
+                        BatchOS.apps = BatchOS.apps.filter(app => app.id !== data.id);
+                        
+                        
+                        BatchOS.saveAppsToStorage();
+                        
+                        
+                        renderAppList();
+                        renderAllAppsList();
+                        
+                        console.log('App uninstalled successfully!');
+                        break;
+                }
+            }
+        });
+
+        async function loadApps() {
+            BatchOS.loadAppsFromStorage();
+            
+            if (BatchOS.apps.length === 0) {
+                BatchOS.apps = [
+                    { id: 'settings', name: 'Settings', path: 'apps/settings/app.html', icon: '☼' },
+                    { id: 'terminal', name: 'Terminal', path: 'apps/terminal/app.html', icon: '>_' },
+                    { id: 'about', name: 'About system', path: 'apps/about/app.html', icon: '?' },
+                    { id: 'notepad', name: 'Notepad', path: 'apps/notepad/app.html', icon: '☰' },
+                    { id: 'explorer', name: 'Explorer', path: 'apps/explorer/app.html', icon: '🗀' },
+                    { id: 'calculator', name: 'Calculator', path: 'apps/calculator/app.html', icon: '⌫' },
+                    { id: 'marketplace', name: 'Marketplace', path: 'apps/marketplace/app.html', icon: '▲' }
+                ];
+                BatchOS.saveAppsToStorage();
+            } else {
+                BatchOS.apps = BatchOS.apps.map(app => {
+                    
+                    return {
+                        id: app.id || 'unknown',
+                        name: app.name || 'Unknown App',
+                        path: app.path || 'apps/unknown/app.html',
+                        icon: app.icon || '?',
+                        ...app
+                    };
+                });
+            }
+            
+            console.log('Final apps list:', BatchOS.apps);
+            renderAppList();
+            renderAllAppsList();
+        }
+
+        function renderAppList() {
+            const appList = document.getElementById('appList');
+            appList.innerHTML = '';
+            
+            BatchOS.apps.forEach(app => {
+                
+                if (!app.name || !app.path) {
+                    console.warn('Invalid app found:', app);
+                    return;
+                }
+                
+                const appItem = document.createElement('div');
+                appItem.className = 'app-item';
+                appItem.innerHTML = `${app.icon || '❓'} ${app.name}`;
+                appItem.onclick = () => openApp(app);
+                
+                if (!BatchOS.isDefaultApp(app.id)) {
+                    appItem.addEventListener('contextmenu', function(e) {
+                        e.preventDefault();
+                        showContextMenu(e, app);
+                    });
+                }
+                
+                appList.appendChild(appItem);
+            });
+        }
+
+        function renderAllAppsList() {
+            const allAppsList = document.getElementById('allAppsList');
+            allAppsList.innerHTML = '';
+            
+            // Сортируем приложения по алфавиту
+            const sortedApps = [...BatchOS.apps].sort((a, b) => a.name.localeCompare(b.name));
+            
+            sortedApps.forEach(app => {
+                if (!app.name || !app.path) {
+                    console.warn('Invalid app found:', app);
+                    return;
+                }
+                
+                const appItem = document.createElement('div');
+                appItem.className = 'all-app-item';
+                appItem.onclick = () => {
+                    openApp(app);
+                    backToMainApps();
+                };
+                
+                appItem.innerHTML = `
+                    <div class="all-app-icon">${app.icon || '❓'}</div>
+                    <div class="all-app-name">${app.name}</div>
+                `;
+                
+                allAppsList.appendChild(appItem);
+            });
+        }
+
+        function toggleAllApps() {
+            if (BatchOS.isAllAppsView) {
+                backToMainApps();
+            } else {
+                showAllApps();
+            }
+        }
+
+        function showAllApps() {
+            const appListContainer = document.getElementById('appListContainer');
+            const allAppsContainer = document.getElementById('allAppsContainer');
+            const allAppsButton = document.getElementById('allAppsButton');
+            
+            appListContainer.classList.add('hidden');
+            allAppsContainer.classList.add('active');
+            allAppsButton.classList.add('active');
+            
+            BatchOS.isAllAppsView = true;
+            
+            // Фокусируемся на поле поиска
+            setTimeout(() => {
+                document.getElementById('allAppsSearchInput').focus();
+            }, 300);
+        }
+
+        function backToMainApps() {
+            const appListContainer = document.getElementById('appListContainer');
+            const allAppsContainer = document.getElementById('allAppsContainer');
+            const allAppsButton = document.getElementById('allAppsButton');
+            const searchInput = document.getElementById('allAppsSearchInput');
+            
+            appListContainer.classList.remove('hidden');
+            allAppsContainer.classList.remove('active');
+            allAppsButton.classList.remove('active');
+            
+            BatchOS.isAllAppsView = false;
+            
+            // Очищаем поиск
+            searchInput.value = '';
+            filterAllApps('');
+        }
+
+        function filterAllApps(query) {
+            const allAppsItems = document.querySelectorAll('.all-app-item');
+            const lowerQuery = query.toLowerCase();
+            
+            allAppsItems.forEach(item => {
+                const appName = item.querySelector('.all-app-name').textContent.toLowerCase();
+                if (appName.includes(lowerQuery)) {
+                    item.style.display = 'flex';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        }
+
+        function showContextMenu(event, app) {
+            const contextMenu = document.getElementById('contextMenu');
+            
+            BatchOS.currentContextApp = app;
+            
+            contextMenu.style.display = 'block';
+            contextMenu.style.left = event.pageX + 'px';
+            contextMenu.style.top = event.pageY + 'px';
+            
+            document.addEventListener('click', closeContextMenu);
+        }
+
+        function closeContextMenu() {
+            const contextMenu = document.getElementById('contextMenu');
+            contextMenu.style.display = 'none';
+            BatchOS.currentContextApp = null;
+            document.removeEventListener('click', closeContextMenu);
+        }
+
+        function deleteApp() {
+            if (BatchOS.currentContextApp) {
+                const app = BatchOS.currentContextApp;
+                
+                if (!BatchOS.isDefaultApp(app.id)) {
+                    BatchOS.apps = BatchOS.apps.filter(a => a.id !== app.id);
+                    BatchOS.saveAppsToStorage();
+                    renderAppList();
+                    renderAllAppsList();
+                    show_local_notification('System', `App "${app.name}" deleted. You can reinstall this app in marketplace.`);
+                } else {
+                    show_local_notification('System error', 'Cannot delete system app!');
+                }
+                
+                closeContextMenu();
+            }
+        }
+
+        function openApp(app) {
+            const windowId = 'window_' + Date.now();
+            
+            const window = document.createElement('div');
+            window.className = 'window';
+            window.id = windowId;
+            window.style.width = '600px';
+            window.style.height = '400px';
+            window.style.top = '50px';
+            window.style.left = '50px';
+            window.style.zIndex = ++BatchOS.zIndex;
+            
+            window.innerHTML = `
+                <div class="window-header" id="whdr">
+                    <div class="window-title">${app.icon || '❓'} ${app.name}</div>
+                    <div class="window-controls">
+                        <div class="window-control window-minimize" onclick="minimizeWindow('${windowId}')">−</div>
+                        <div class="window-control window-maximize" onclick="maximizeWindow('${windowId}')">⛶</div>
+                        <div class="window-control window-close" onclick="closeWindow('${windowId}')">×</div>
+                    </div>
+                </div>
+                <div class="window-content">
+                    <iframe src="${app.path}" id="iframe_${windowId}" sandbox="allow-scripts allow-same-origin allow-modals allow-forms allow-popups"></iframe>
+                    <!-- Элементы для изменения размеров -->
+                    <div class="window-resize-handle window-resize-n"></div>
+                    <div class="window-resize-handle window-resize-s"></div>
+                    <div class="window-resize-handle window-resize-e"></div>
+                    <div class="window-resize-handle window-resize-w"></div>
+                    <div class="window-resize-handle window-resize-ne"></div>
+                    <div class="window-resize-handle window-resize-nw"></div>
+                    <div class="window-resize-handle window-resize-se"></div>
+                    <div class="window-resize-handle window-resize-sw"></div>
+                </div>
+            `;
+            
+            document.getElementById('windowsContainer').appendChild(window);
+            
+            BatchOS.windows.push({
+                id: windowId,
+                element: window,
+                app: app,
+                iframe: document.getElementById(`iframe_${windowId}`),
+                taskbarButton: null
+            });
+            
+            addToTaskbar(windowId, app);
+            
+            makeDraggable(windowId);
+            makeResizable(windowId);
+            
+            start_pressed();
+            
+            return windowId;
+        }
+
+        function makeResizable(windowId) {
+            const window = document.getElementById(windowId);
+            const handles = window.querySelectorAll('.window-resize-handle');
+            const minWidth = 300;
+            const minHeight = 200;
+            
+            handles.forEach(handle => {
+                handle.addEventListener('mousedown', initResize);
+            });
+            
+            function initResize(e) {
+                const windowObj = BatchOS.windows.find(w => w.id === windowId);
+                if (windowObj && windowObj.element.classList.contains('maximized')) return;
+                
+                e.preventDefault();
+                focusWindow(windowId);
+                
+                const direction = e.target.classList[1].split('-')[2];
+                const startX = e.clientX;
+                const startY = e.clientY;
+                const startWidth = parseInt(document.defaultView.getComputedStyle(window).width, 10);
+                const startHeight = parseInt(document.defaultView.getComputedStyle(window).height, 10);
+                const startLeft = parseInt(document.defaultView.getComputedStyle(window).left, 10);
+                const startTop = parseInt(document.defaultView.getComputedStyle(window).top, 10);
+                
+                document.onmousemove = resize;
+                document.onmouseup = stopResize;
+                
+                function resize(e) {
+                    e.preventDefault();
+                    
+                    let newWidth = startWidth;
+                    let newHeight = startHeight;
+                    let newLeft = startLeft;
+                    let newTop = startTop;
+                    
+                    switch(direction) {
+                        case 'e':
+                            newWidth = startWidth + (e.clientX - startX);
+                            break;
+                        case 'w':
+                            newWidth = startWidth - (e.clientX - startX);
+                            newLeft = startLeft + (e.clientX - startX);
+                            break;
+                        case 's':
+                            newHeight = startHeight + (e.clientY - startY);
+                            break;
+                        case 'n':
+                            newHeight = startHeight - (e.clientY - startY);
+                            newTop = startTop + (e.clientY - startY);
+                            break;
+                        case 'se':
+                            newWidth = startWidth + (e.clientX - startX);
+                            newHeight = startHeight + (e.clientY - startY);
+                            break;
+                        case 'sw':
+                            newWidth = startWidth - (e.clientX - startX);
+                            newLeft = startLeft + (e.clientX - startX);
+                            newHeight = startHeight + (e.clientY - startY);
+                            break;
+                        case 'ne':
+                            newWidth = startWidth + (e.clientX - startX);
+                            newHeight = startHeight - (e.clientY - startY);
+                            newTop = startTop + (e.clientY - startY);
+                            break;
+                        case 'nw':
+                            newWidth = startWidth - (e.clientX - startX);
+                            newLeft = startLeft + (e.clientX - startX);
+                            newHeight = startHeight - (e.clientY - startY);
+                            newTop = startTop + (e.clientY - startY);
+                            break;
+                    }
+                    
+                    if (newWidth >= minWidth) {
+                        window.style.width = newWidth + 'px';
+                        if (direction.includes('w')) {
+                            window.style.left = newLeft + 'px';
+                        }
+                    }
+                    
+                    if (newHeight >= minHeight) {
+                        window.style.height = newHeight + 'px';
+                        if (direction.includes('n')) {
+                            window.style.top = newTop + 'px';
+                        }
+                    }
+                }
+                
+                function stopResize() {
+                    document.onmousemove = null;
+                    document.onmouseup = null;
+                }
+            }
+        }
+
+        function addToTaskbar(windowId, app) {
+            const taskbarApps = document.getElementById('taskbarApps');
+            const button = document.createElement('div');
+            button.className = 'taskbar-app';
+            
+            // Защита от undefined значений
+            const appName = app?.name || 'Unknown App';
+            const appIcon = app?.icon || '❓';
+            
+            button.innerHTML = `${appIcon} ${appName}`;
+            button.onclick = () => {
+                const windowObj = BatchOS.windows.find(w => w.id === windowId);
+                if (windowObj) {
+                    if (windowObj.element.style.display === 'none') {
+                        windowObj.element.style.display = 'flex';
+                        focusWindow(windowId);
+                    } else {
+                        focusWindow(windowId);
+                    }
+                }
+            };
+            
+            taskbarApps.appendChild(button);
+            
+            const windowObj = BatchOS.windows.find(w => w.id === windowId);
+            if (windowObj) {
+                windowObj.taskbarButton = button;
+            }
+            
+            return button;
+        }
+
+        function closeWindow(windowId) {
+            const windowObj = BatchOS.windows.find(w => w.id === windowId);
+            if (windowObj) {
+                if (windowObj.taskbarButton) {
+                    windowObj.taskbarButton.remove();
+                }
+                windowObj.element.remove();
+                BatchOS.windows = BatchOS.windows.filter(w => w.id !== windowId);
+            }
+        }
+
+        function minimizeWindow(windowId) {
+            const windowObj = BatchOS.windows.find(w => w.id === windowId);
+            if (windowObj) {
+                windowObj.element.style.display = 'none';
+            }
+        }
+
+        function maximizeWindow(windowId) {
+            const windowObj = BatchOS.windows.find(w => w.id === windowId);
+            if (windowObj) {
+                const window = windowObj.element;
+                if (window.classList.contains('maximized')) {
+                    window.classList.remove('maximized');
+                    window.style.width = windowObj.originalWidth || '600px';
+                    window.style.height = windowObj.originalHeight || '400px';
+                    window.style.top = windowObj.originalTop || '50px';
+                    window.style.left = windowObj.originalLeft || '50px';
+                } else {
+                    windowObj.originalWidth = window.style.width;
+                    windowObj.originalHeight = window.style.height;
+                    windowObj.originalTop = window.style.top;
+                    windowObj.originalLeft = window.style.left;
+                    
+                    window.classList.add('maximized');
+                    window.style.width = '100%';
+                    window.style.height = '100%';
+                    window.style.top = '0';
+                    window.style.left = '0';
+                }
+                focusWindow(windowId);
+            }
+        }
+
+        function focusWindow(windowId) {
+            const windowObj = BatchOS.windows.find(w => w.id === windowId);
+            if (windowObj) {
+                BatchOS.windows.forEach(w => {
+                    w.element.style.zIndex = 100;
+                    if (w.taskbarButton) {
+                        w.taskbarButton.classList.remove('active');
+                    }
+                });
+                
+                windowObj.element.style.zIndex = ++BatchOS.zIndex;
+                if (windowObj.taskbarButton) {
+                    windowObj.taskbarButton.classList.add('active');
+                }
+            }
+        }
+
+        function makeDraggable(windowId) {
+            const window = document.getElementById(windowId);
+            const header = window.querySelector('.window-header');
+            
+            header.onmousedown = function(e) {
+                const windowObj = BatchOS.windows.find(w => w.id === windowId);
+                if (windowObj && windowObj.element.classList.contains('maximized')) return;
+                
+                e.preventDefault();
+                focusWindow(windowId);
+                
+                const startX = e.clientX;
+                const startY = e.clientY;
+                const startLeft = parseInt(window.style.left, 10) || 0;
+                const startTop = parseInt(window.style.top, 10) || 0;
+                
+                document.onmousemove = move;
+                document.onmouseup = stop;
+                
+                function move(e) {
+                    e.preventDefault();
+                    const newLeft = startLeft + e.clientX - startX;
+                    const newTop = startTop + e.clientY - startY;
+                    
+                    window.style.left = newLeft + 'px';
+                    window.style.top = newTop + 'px';
+                }
+                
+                function stop() {
+                    document.onmousemove = null;
+                    document.onmouseup = null;
+                }
+            };
+        }
+
+        function start_pressed() {
+            const start_button = document.getElementById('stbut');
+            const start_menu = document.getElementById('stm');
+            
+            if (start_menu.classList.contains('active')) {
+                start_menu.classList.remove('active');
+                start_button.classList.remove('active');
+                backToMainApps(); // Возвращаем к основному виду при закрытии меню
+            } else {
+                start_menu.classList.add('active');
+                start_button.classList.add('active');
+            }
+        }
+
+        function settings_on_start() {
+            openApp({ id: 'settings', name: 'Settings', path: 'apps/settings/app.html', icon: '☼' });
+        }
+
+        function show_local_notification(title, text) {
+            const notifybar = document.getElementById('notififi');
+            const title_notif = document.getElementById('ntf_tit');
+            const subtitle = document.getElementById('ntf_txt');
+            title_notif.textContent = title;
+            subtitle.textContent = text;
+            
+            function sleep(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+            
+            async function main_notify() {
+                notifybar.classList.add('active');
+                await sleep(5000);
+                notifybar.classList.remove('active');
+            }
+            main_notify();
+        }
+        document.addEventListener('DOMContentLoaded', function() {
+            // Объявляем переменные
+            let start_open = false;
+            const start_button = document.getElementById('stbut');
+            const start_username = document.getElementById('start_nickname');
+            
+            loadApps();
+            
+            // Инициализация поиска в All Apps
+            const allAppsSearchInput = document.getElementById('allAppsSearchInput');
+            allAppsSearchInput.addEventListener('input', function(e) {
+                filterAllApps(e.target.value);
+            });
+            
+            // Закрытие контекстного меню при клике вне его
+            document.addEventListener('click', function() {
+                const contextMenu = document.getElementById('contextMenu');
+                if (contextMenu.style.display === 'block') {
+                    contextMenu.style.display = 'none';
+                }
+            });
+            
+            // Обновление времени
+            function updateDateTime() {
+                const now = new Date();
+                const timeElement = document.getElementById('time');
+                const dateElement = document.getElementById('date');
+                
+                if (timeElement) {
+                    timeElement.textContent = now.toLocaleTimeString();
+                }
+                if (dateElement) {
+                    dateElement.textContent = now.toLocaleDateString();
+                }
+            }
+            
+            setInterval(updateDateTime, 1000);
+            updateDateTime();
+            
+            // Загрузка пользовательских настроек
+            const username = localStorage.getItem('username');
+            if (username) {
+                document.getElementById('start_nickname').textContent = username;
+            }
+            
+            const wallpaper_id = localStorage.getItem('wallpaper_id');
+            const wallpaper_type = localStorage.getItem('wallpaper_type');
+            if (wallpaper_type === 'urled') {
+                document.body.style.backgroundImage = "url('bin/wlp/" + wallpaper_id + ".png')";
+            } else if (wallpaper_type === 'linked') {
+                const wallpaper_link = localStorage.getItem('wallpaper_linked_link');
+                document.body.style.backgroundImage = "url('" + wallpaper_link + "')";
+            }
+            
+            const isGlassEnabled = localStorage.getItem('is_glass_enabled') === 'true';
+            if (isGlassEnabled) {
+                document.getElementById('stm').classList.add('withglass');
+                document.getElementById('tlbr').classList.add('withglass');
+                document.getElementById('notififi').classList.add('withglass');
+            }
+
+            ///////////////////////////////////////////
+
+            const cursor = document.querySelector('.custom-cursor');
+    
+            // Движение курсора
+            document.addEventListener('mousemove', (e) => {
+                cursor.style.left = e.clientX + 'px';
+                cursor.style.top = e.clientY + 'px';
+            });
+
+            // Определяем курсор по типу элемента
+            document.addEventListener('mouseover', (e) => {
+                const target = e.target;
+                
+                // Сбрасываем все классы
+                cursor.className = 'custom-cursor';
+                
+                // Проверяем типы элементов
+                if (target.closest('a, button, .start, .taskbar-app, .app-item, .all-app-item, .setting-button, .allapps-button, .window-control, .context-menu-item')) {
+                    cursor.classList.add('pointer');
+                } else if (target.closest('.window-header')) {
+                    cursor.classList.add('move');
+                } else if (target.closest('input, textarea, [contenteditable="true"]')) {
+                    cursor.classList.add('text');
+                } else if (target.closest('.window-resize-n, .window-resize-s')) {
+                    cursor.classList.add('resize-n');
+                } else if (target.closest('.window-resize-e, .window-resize-w')) {
+                    cursor.classList.add('resize-e');
+                } else if (target.closest('.window-resize-ne, .window-resize-sw')) {
+                    cursor.classList.add('resize-ne');
+                } else if (target.closest('.window-resize-nw, .window-resize-se')) {
+                    cursor.classList.add('resize-nw');
+                }
+            });
+
+            // Скрываем кастомный курсор над iframe
+            document.addEventListener('mouseover', (e) => {
+                if (e.target.tagName === 'IFRAME') {
+                    cursor.style.display = 'none';
+                } else {
+                    cursor.style.display = 'block';
+                }
+            });
+
+            // Скрываем при выходе за пределы окна
+            document.addEventListener('mouseout', (e) => {
+                if (!e.relatedTarget) {
+                    cursor.style.opacity = '0';
+                }
+            });
+
+            document.addEventListener('mouseover', () => {
+                cursor.style.opacity = '1';
+            });
+        });
+    </script>
+</body>
+</html>

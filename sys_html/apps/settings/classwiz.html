@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings</title>
+    <style>
+        * {
+            margin: 0;
+        }
+        @font-face {
+            font-family: 'BatchSans';
+            src: url('bin/fonts/NetflixSans-Rg.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+        }
+        @font-face {
+            font-family: 'BatchSansIt';
+            src: url('bin/fonts/NetflixSans-It.ttf') format('truetype');
+            font-weight: normal;
+            font-style: italic;
+        }
+        body {
+            background-color: #1d1d1d;
+            font-family: 'BatchSans', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .header {
+            color: white;
+            font-size: x-large;
+            padding-left: 10px;
+            padding-top: 10px;
+            padding-bottom: 10px;
+        }
+        .subtitle {
+            padding-left: 10px;
+            color: white;
+            padding-bottom: 5px;
+            font-style: italic;
+            font-family: 'BatchSans', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .zone_header {
+            font-size: 12px;
+            text-decoration: underline;
+            color: white;
+            padding-left: 10px;
+            padding-bottom: 5px;
+        }
+        .accname_input {
+            margin-left: 10px;
+            border: 0;
+            background-color: #444;
+            border-radius: 3px;
+            color: white;
+        }
+        .accname_button {
+            border: 0;
+            background-color: #444;
+            border-radius: 3px;
+            color: white;
+            padding-bottom: 5px;
+        }
+        .accname_button_2 {
+            border: 0;
+            margin-left: 10px;
+            background-color: #444;
+            border-radius: 3px;
+            color: white;
+            padding-bottom: 5px;
+            margin-bottom: 5px;
+        }
+        .sel_wlp {
+            color: white;
+            margin-left: 10px;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        BatchOS settings
+    </div>
+    <div class="subtitle">Main settings</div>
+    <div class="zone1">
+        <div class="zone_header">Account name</div>
+        <input class='accname_input' id="nickenter" type="text" placeholder="Enter new Account name...">
+        <button class="accname_button" onclick="set_nickname()">Apply</button>
+        <div class="zone_header">You must reload BatchOS to full apply changes.</div>
+    </div>
+    <div class="subtitle">Personalization</div>
+    <div class="zone1">
+        <div class="zone_header">Desktop wallpaper</div>
+        <p class="sel_wlp"><input type="radio" class="wallpaper_select" name="wlp" id="1" checked="true"> Wallpaper 1</p>
+        <p class="sel_wlp"><input type="radio" class="wallpaper_select" name="wlp" id="2"> Wallpaper 2</p>
+        <p class="sel_wlp"><input type="radio" class="wallpaper_select" name="wlp" id="3"> Wallpaper 3</p>
+        <p class="sel_wlp"><input type="radio" class="wallpaper_select" name="wlp" id="4"> Wallpaper 4</p>
+        <p class="sel_wlp"><input type="radio" class="wallpaper_select" name="wlp" id="5"> Wallpaper 5</p>
+        <button class="accname_button_2" onclick="applywallpaper()">Apply Wallpaper</button>
+        <div class="zone_header">...Or enter name of the wallpaper file (without .png):</div>
+        <input type="text" class="accname_input" id="instwallp_input" placeholder="Enter filename">
+        <button class="accname_button" id="instwallp_button" onclick="applyinstantwallpaper()">Apply</button>
+        <div class="zone_header">...Or enter link to your wallpaper:</div>
+        <input type="text" class="accname_input" id="linkwallp_input" placeholder="Enter link">
+        <button class="accname_button" id="linkwallp_button" onclick="set_customized_wallpaper()">Apply</button>
+        <div class="zone_header">WARNING: If you input invalild wallpaper id or filename (yes, and link), wallpaper will be white!</div>
+        <div class="zone_header">Taskbar glass effect</div>
+        <p class="sel_wlp"><input type="radio" class="wallpaper_select" name="tbg" id="1" checked="true">Disabled</p>
+        <p class="sel_wlp"><input type="radio" class="wallpaper_select" name="tbg" id="2">Enabled</p>
+        <button class="accname_button_2" onclick="applyglass()">Apply glass effect</button>
+    </div>
+    <div class="subtitle">XFinder menu settings</div>
+    <div class="zone1">
+        <div class="zone_header">Reset apps list in xfinder</div>
+        <button class="accname_button_2" onclick="resetxfinder()">Reset APPSLIST</button>
+        <div class="zone_header">WARNING: YOU MUST REINSTALL ALL APPS, BUT YOUR DATA BE SAVED!!!</div>
+    </div>          
+</body>
+<script>
+    function notify(title, subtitle) {
+        window.parent.postMessage({
+            type: 'BATCHOS_API',
+            action: 'SHOW_NOTIFY',
+            data: {
+                notif_title: title,
+                notif_subtitle: subtitle
+            }
+        }, '*');
+    }
+    function set_customized_wallpaper() {
+        const urlforcst = document.getElementById("linkwallp_input");
+        window.parent.postMessage({
+            type: 'BATCHOS_API',
+            action: 'SET_CUSTOM_WALLPAPER',
+            data: {
+                wallpaper_link: urlforcst.value
+            }
+        }, '*')
+    }
+    /////Wallpaper/////
+    function applywallpaper() {
+        const selectedRadio = document.querySelector('input[name="wlp"]:checked');
+        if (selectedRadio) {
+            // Отправляем сообщение основной ОС
+            window.parent.postMessage({
+                type: 'BATCHOS_API',
+                action: 'SET_WALLPAPER',
+                data: {
+                    wallpaper_id: selectedRadio.id
+                }
+            }, '*');
+            console.log('Wallpaper change requested:', selectedRadio.id);
+        }
+    }
+
+    /////Nickname/////
+    function set_nickname() {
+        const entry = document.getElementById('nickenter'); // Исправь ID!
+        let nickname = entry.value;
+        
+        if (nickname.trim() === '') {
+            alert('Please enter a username');
+            return;
+        }
+        
+        window.parent.postMessage({
+            type: 'BATCHOS_API',
+            action: 'SET_USERNAME',
+            data: {
+                text: nickname
+            }
+        }, '*');
+        
+        notify('Settings', `Your username changed to ${nickname}.`);
+    }
+
+    /////Glass effect/////
+    function applyglass() {
+        const selectedGlassRadio = document.querySelector('input[name="tbg"]:checked');
+        let glass_enabled_pereodic = false;
+        if (selectedGlassRadio.id == '1') {
+            glass_enabled_pereodic = false;
+        } else if (selectedGlassRadio.id == '2') {
+            glass_enabled_pereodic = true;
+        }
+
+        window.parent.postMessage({
+            type: 'BATCHOS_API',
+            action: 'SET_GLASS_EFFECT',
+            data: {
+                status: glass_enabled_pereodic
+            }
+        }, '*');
+    } 
+    /////Reset xfinder/////
+    function resetxfinder() {
+        window.parent.postMessage({
+            type: 'BATCHOS_API',
+            action: 'RESET_XFINDER'
+        }, '*');
+    }
+    /////Apply instant wallpaper/////
+    function applyinstantwallpaper() {
+        let instid = document.getElementById('instwallp_input').value;
+        if (instid == '') {
+            alert('Please, enter a filename!');
+        } else (
+            window.parent.postMessage({
+                type: 'BATCHOS_API',
+                action: 'SET_WALLPAPER',
+                data: {
+                    wallpaper_id: instid
+                }
+            }, '*')
+        )
+    }
+</script>
+
+</html>
