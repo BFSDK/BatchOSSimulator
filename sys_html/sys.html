@@ -1190,6 +1190,7 @@
                 if (windowObj && windowObj.element.classList.contains('maximized')) return;
                 
                 e.preventDefault();
+                e.stopPropagation(); // Важно: предотвращаем всплытие
                 focusWindow(windowId);
                 
                 const direction = e.target.classList[1].split('-')[2];
@@ -1200,8 +1201,38 @@
                 const startLeft = parseInt(document.defaultView.getComputedStyle(window).left, 10);
                 const startTop = parseInt(document.defaultView.getComputedStyle(window).top, 10);
                 
-                document.onmousemove = resize;
-                document.onmouseup = stopResize;
+                // Создаем overlay для изменения размеров
+                const overlay = document.createElement('div');
+                overlay.style.position = 'fixed';
+                overlay.style.top = '0';
+                overlay.style.left = '0';
+                overlay.style.width = '100%';
+                overlay.style.height = '100%';
+                overlay.style.zIndex = '10000';
+                
+                // Устанавливаем правильный курсор для overlay
+                switch(direction) {
+                    case 'e': case 'w': 
+                        overlay.style.cursor = 'e-resize'; 
+                        break;
+                    case 'n': case 's': 
+                        overlay.style.cursor = 'n-resize'; 
+                        break;
+                    case 'ne': case 'sw': 
+                        overlay.style.cursor = 'ne-resize'; 
+                        break;
+                    case 'nw': case 'se': 
+                        overlay.style.cursor = 'nw-resize'; 
+                        break;
+                }
+                
+                overlay.style.background = 'transparent';
+                overlay.style.pointerEvents = 'auto';
+                document.body.appendChild(overlay);
+                
+                // Обработчики вешаем на overlay
+                overlay.onmousemove = resize;
+                overlay.onmouseup = stopResize;
                 
                 function resize(e) {
                     e.preventDefault();
@@ -1264,8 +1295,11 @@
                 }
                 
                 function stopResize() {
-                    document.onmousemove = null;
-                    document.onmouseup = null;
+                    // Убираем overlay
+                    overlay.remove();
+                    // Убираем обработчики
+                    overlay.onmousemove = null;
+                    overlay.onmouseup = null;
                 }
             }
         }
@@ -1368,6 +1402,11 @@
             const header = window.querySelector('.window-header');
             
             header.onmousedown = function(e) {
+                // Проверяем, не кликнули ли на кнопки управления
+                if (e.target.closest('.window-controls')) {
+                    return; // Не начинаем перетаскивание если клик на кнопках
+                }
+                
                 const windowObj = BatchOS.windows.find(w => w.id === windowId);
                 if (windowObj && windowObj.element.classList.contains('maximized')) return;
                 
@@ -1379,8 +1418,22 @@
                 const startLeft = parseInt(window.style.left, 10) || 0;
                 const startTop = parseInt(window.style.top, 10) || 0;
                 
-                document.onmousemove = move;
-                document.onmouseup = stop;
+                // Временно добавляем overlay для iframe, чтобы перехватывать события мыши
+                const overlay = document.createElement('div');
+                overlay.style.position = 'fixed';
+                overlay.style.top = '0';
+                overlay.style.left = '0';
+                overlay.style.width = '100%';
+                overlay.style.height = '100%';
+                overlay.style.zIndex = '10000';
+                overlay.style.cursor = 'move';
+                overlay.style.background = 'transparent';
+                overlay.style.pointerEvents = 'auto'; // Важно: должен перехватывать события
+                document.body.appendChild(overlay);
+                
+                // Обработчики вешаем на overlay
+                overlay.onmousemove = move;
+                overlay.onmouseup = stop;
                 
                 function move(e) {
                     e.preventDefault();
@@ -1391,9 +1444,12 @@
                     window.style.top = newTop + 'px';
                 }
                 
-                function stop() {
-                    document.onmousemove = null;
-                    document.onmouseup = null;
+                function stop(e) {
+                    // Убираем overlay
+                    overlay.remove();
+                    // Убираем обработчики
+                    overlay.onmousemove = null;
+                    overlay.onmouseup = null;
                 }
             };
         }
@@ -1552,6 +1608,4 @@
         });
     </script>
 </body>
-
 </html>
-
