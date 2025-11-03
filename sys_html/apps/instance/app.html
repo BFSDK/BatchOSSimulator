@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instance</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+            background: #36393f;
+            color: #dcddde;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .logo {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 2rem;
+            color: #ffffff;
+            letter-spacing: -0.5px;
+        }
+
+        .input-section {
+            background: #2f3136;
+            padding: 2rem;
+            border-radius: 8px;
+            width: 100%;
+            max-width: 800px;
+            border: 1px solid #40444b;
+        }
+
+        .input-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #b9bbbe;
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        input[type="text"], input[type="url"] {
+            width: 100%;
+            padding: 10px 12px;
+            background: #40444b;
+            border: 1px solid #40444b;
+            border-radius: 4px;
+            color: #dcddde;
+            font-size: 1rem;
+            transition: border-color 0.2s ease;
+        }
+
+        input[type="text"]:focus, input[type="url"]:focus {
+            outline: none;
+            border-color: #00aff4;
+        }
+
+        input::placeholder {
+            color: #72767d;
+        }
+
+        .btn {
+            background: #5865f2;
+            color: white;
+            border: none;
+            padding: 12px 16px;
+            border-radius: 4px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            width: 100%;
+        }
+
+        .btn:hover {
+            background: #4752c4;
+        }
+
+        .btn:active {
+            background: #3c45a5;
+        }
+
+        .btn-secondary {
+            background: #4f545c;
+            padding: 8px 12px;
+            font-size: 0.875rem;
+        }
+
+        .btn-secondary:hover {
+            background: #5d6269;
+        }
+
+        .btn-danger {
+            background: #ed4245;
+        }
+
+        .btn-danger:hover {
+            background: #c03537;
+        }
+
+        .btn-success {
+            background: #3ba55c;
+        }
+
+        .btn-success:hover {
+            background: #2d8b4c;
+        }
+
+        .iframe-wrapper {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #36393f;
+            z-index: 1000;
+        }
+
+        .iframe-wrapper.hidden {
+            display: none;
+        }
+
+        .iframe-container {
+            width: 100%;
+            height: 100%;
+            padding-top: 50px;
+        }
+
+        .iframe-container iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .hint {
+            margin-top: 1rem;
+            color: #72767d;
+            font-size: 0.8rem;
+            text-align: center;
+            line-height: 1.4;
+        }
+
+        /* Top bar styles */
+        .top-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 50px;
+            background: #2f3136;
+            border-bottom: 1px solid #40444b;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1001;
+        }
+
+        .top-bar.hidden {
+            display: none;
+        }
+
+        .current-url {
+            color: #b9bbbe;
+            font-size: 0.875rem;
+            font-family: 'Consolas', 'Monaco', monospace;
+            max-width: 70%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: color 0.2s ease;
+            padding: 8px 12px;
+            border-radius: 4px;
+        }
+
+        .current-url:hover {
+            color: #ffffff;
+            background: #40444b;
+        }
+
+        .close-btn {
+            background: #ed4245;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .close-btn:hover {
+            background: #c03537;
+        }
+
+        .key-hint {
+            background: #40444b;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            color: #b9bbbe;
+            margin-left: 10px;
+        }
+
+        /* Instances table styles */
+        .instances-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            background: #2f3136;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .instances-table th,
+        .instances-table td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid #40444b;
+        }
+
+        .instances-table th {
+            background: #40444b;
+            color: #b9bbbe;
+            font-weight: 600;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+        }
+
+        .instances-table tr:hover {
+            background: #36393f;
+        }
+
+        .instance-name {
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .instance-url {
+            color: #b9bbbe;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.875rem;
+            max-width: 300px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .instance-actions {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+
+        .default-badge {
+            background: #3ba55c;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .add-instance-form {
+            background: #40444b;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .form-group {
+            flex: 1;
+        }
+
+        .tabs {
+            display: flex;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid #40444b;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            background: none;
+            border: none;
+            color: #b9bbbe;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s ease;
+        }
+
+        .tab.active {
+            color: #ffffff;
+            border-bottom-color: #5865f2;
+        }
+
+        .tab:hover {
+            color: #ffffff;
+            background: #40444b;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="top-bar hidden" id="topBar">
+        <div class="current-url" id="currentUrl" title="Click to reload"></div>
+        <div style="display: flex; align-items: center;">
+            <div class="key-hint">Ctrl+Shift+I</div>
+            <button class="close-btn" id="closeBtn">Close Instance</button>
+        </div>
+    </div>
+
+    <div class="container" id="inputContainer">
+        <div class="logo">Instance</div>
+        <div class="input-section">
+            <div class="tabs">
+                <button class="tab active" data-tab="quick">Quick Start</button>
+                <button class="tab" data-tab="instances">Instances</button>
+            </div>
+
+            <div class="tab-content active" id="quickTab">
+                <div class="input-group">
+                    <label for="urlInput">Enter URL</label>
+                    <input 
+                        type="url" 
+                        id="urlInput" 
+                        placeholder="https://example.com" 
+                        autocomplete="off"
+                    >
+                </div>
+                <button class="btn" id="instanceBtn">Instance!</button>
+                <div class="hint">
+                    Press Ctrl+Shift+I to return to this screen<br>
+                    Or use the "Close Instance" button in the top bar
+                </div>
+            </div>
+
+            <div class="tab-content" id="instancesTab">
+                <div class="add-instance-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="instanceName">Instance Name</label>
+                            <input 
+                                type="text" 
+                                id="instanceName" 
+                                placeholder="My Website"
+                                autocomplete="off"
+                            >
+                        </div>
+                        <div class="form-group">
+                            <label for="instanceUrl">URL</label>
+                            <input 
+                                type="url" 
+                                id="instanceUrl" 
+                                placeholder="https://example.com"
+                                autocomplete="off"
+                            >
+                        </div>
+                    </div>
+                    <button class="btn btn-success" id="addInstanceBtn">Add Instance</button>
+                </div>
+
+                <table class="instances-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>URL</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="instancesTableBody">
+                        <!-- Instances will be populated here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="iframe-wrapper hidden" id="iframeWrapper">
+        <div class="iframe-container">
+            <iframe id="mainFrame" src="" sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation"></iframe>
+        </div>
+    </div>
+
+    <script>
+        class InstanceApp {
+            constructor() {
+                this.storageKey = 'instances';
+                this.defaultInstanceKey = 'default_instance';
+                this.inputContainer = document.getElementById('inputContainer');
+                this.iframeWrapper = document.getElementById('iframeWrapper');
+                this.topBar = document.getElementById('topBar');
+                this.urlInput = document.getElementById('urlInput');
+                this.instanceBtn = document.getElementById('instanceBtn');
+                this.mainFrame = document.getElementById('mainFrame');
+                this.closeBtn = document.getElementById('closeBtn');
+                this.currentUrl = document.getElementById('currentUrl');
+                this.instancesTableBody = document.getElementById('instancesTableBody');
+                this.instanceName = document.getElementById('instanceName');
+                this.instanceUrl = document.getElementById('instanceUrl');
+                this.addInstanceBtn = document.getElementById('addInstanceBtn');
+                
+                this.instances = [];
+                this.defaultInstanceId = null;
+                this.init();
+            }
+
+            init() {
+                this.loadInstances();
+                
+                // Check for default instance
+                const defaultInstance = this.getDefaultInstance();
+                if (defaultInstance) {
+                    this.showIframe(defaultInstance.url, defaultInstance.name);
+                }
+
+                // Button handlers
+                this.instanceBtn.addEventListener('click', () => {
+                    this.handleQuickInstance();
+                });
+
+                this.addInstanceBtn.addEventListener('click', () => {
+                    this.handleAddInstance();
+                });
+
+                // Enter key handlers
+                this.urlInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        this.handleQuickInstance();
+                    }
+                });
+
+                this.instanceUrl.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        this.handleAddInstance();
+                    }
+                });
+
+                // Close button handler
+                this.closeBtn.addEventListener('click', () => {
+                    this.showInput();
+                });
+
+                // URL click handler for reload
+                this.currentUrl.addEventListener('click', () => {
+                    this.reloadIframe();
+                });
+
+                // Keyboard shortcut handler
+                document.addEventListener('keydown', (e) => {
+                    if (e.ctrlKey && e.shiftKey && e.key === 'I') {
+                        e.preventDefault();
+                        this.showInput();
+                    }
+                });
+
+                // Tab handlers
+                document.querySelectorAll('.tab').forEach(tab => {
+                    tab.addEventListener('click', () => {
+                        this.switchTab(tab.dataset.tab);
+                    });
+                });
+
+                // Iframe event listeners for navigation
+                this.mainFrame.addEventListener('load', () => {
+                    this.updateCurrentUrl();
+                });
+
+                // Focus on input field
+                this.urlInput.focus();
+            }
+
+            loadInstances() {
+                const saved = localStorage.getItem(this.storageKey);
+                if (saved) {
+                    this.instances = JSON.parse(saved);
+                }
+                
+                const savedDefault = localStorage.getItem(this.defaultInstanceKey);
+                if (savedDefault) {
+                    this.defaultInstanceId = savedDefault;
+                }
+                
+                this.renderInstancesTable();
+            }
+
+            saveInstances() {
+                localStorage.setItem(this.storageKey, JSON.stringify(this.instances));
+            }
+
+            getDefaultInstance() {
+                if (this.defaultInstanceId) {
+                    return this.instances.find(instance => instance.id === this.defaultInstanceId);
+                }
+                return null;
+            }
+
+            handleQuickInstance() {
+                const url = this.urlInput.value.trim();
+                
+                if (!url) {
+                    this.showError('Please enter a URL');
+                    return;
+                }
+
+                const formattedUrl = this.formatUrl(url);
+                if (!formattedUrl) {
+                    this.showError('Please enter a valid URL');
+                    return;
+                }
+
+                this.showIframe(formattedUrl, 'Quick Instance');
+            }
+
+            handleAddInstance() {
+                const name = this.instanceName.value.trim();
+                const url = this.instanceUrl.value.trim();
+                
+                if (!name || !url) {
+                    this.showError('Please enter both name and URL');
+                    return;
+                }
+
+                const formattedUrl = this.formatUrl(url);
+                if (!formattedUrl) {
+                    this.showError('Please enter a valid URL');
+                    return;
+                }
+
+                const instance = {
+                    id: Date.now().toString(),
+                    name: name,
+                    url: formattedUrl
+                };
+
+                this.instances.push(instance);
+                this.saveInstances();
+                this.renderInstancesTable();
+                
+                // Clear form
+                this.instanceName.value = '';
+                this.instanceUrl.value = '';
+                
+                // If this is the first instance, set it as default
+                if (this.instances.length === 1) {
+                    this.setDefaultInstance(instance.id);
+                }
+            }
+
+            formatUrl(url) {
+                if (!url) return null;
+                
+                let formattedUrl = url.trim();
+                if (!formattedUrl.startsWith('http://') && !formattedUrl.startsWith('https://')) {
+                    formattedUrl = 'https://' + formattedUrl;
+                }
+
+                try {
+                    new URL(formattedUrl);
+                    return formattedUrl;
+                } catch {
+                    return null;
+                }
+            }
+
+            deleteInstance(id) {
+                this.instances = this.instances.filter(instance => instance.id !== id);
+                
+                // If deleting default instance, clear default
+                if (this.defaultInstanceId === id) {
+                    this.defaultInstanceId = null;
+                    localStorage.removeItem(this.defaultInstanceKey);
+                }
+                
+                this.saveInstances();
+                this.renderInstancesTable();
+            }
+
+            setDefaultInstance(id) {
+                this.defaultInstanceId = id;
+                localStorage.setItem(this.defaultInstanceKey, id);
+                this.renderInstancesTable();
+            }
+
+            launchInstance(url, name) {
+                this.showIframe(url, name);
+            }
+
+            renderInstancesTable() {
+                this.instancesTableBody.innerHTML = '';
+                
+                if (this.instances.length === 0) {
+                    this.instancesTableBody.innerHTML = `
+                        <tr>
+                            <td colspan="3" style="text-align: center; color: #72767d;">
+                                No instances added yet
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+                
+                this.instances.forEach(instance => {
+                    const isDefault = instance.id === this.defaultInstanceId;
+                    const row = document.createElement('tr');
+                    
+                    row.innerHTML = `
+                        <td>
+                            <div class="instance-name">
+                                ${this.escapeHtml(instance.name)}
+                                ${isDefault ? '<span class="default-badge">Default</span>' : ''}
+                            </div>
+                        </td>
+                        <td class="instance-url" title="${this.escapeHtml(instance.url)}">
+                            ${this.escapeHtml(instance.url)}
+                        </td>
+                        <td>
+                            <div class="instance-actions">
+                                <button class="btn btn-secondary" onclick="app.launchInstance('${this.escapeHtml(instance.url)}', '${this.escapeHtml(instance.name)}')">
+                                    Launch
+                                </button>
+                                ${!isDefault ? `
+                                    <button class="btn btn-success" onclick="app.setDefaultInstance('${instance.id}')">
+                                        Set Default
+                                    </button>
+                                ` : ''}
+                                <button class="btn btn-danger" onclick="app.deleteInstance('${instance.id}')">
+                                    Delete
+                                </button>
+                            </div>
+                        </td>
+                    `;
+                    
+                    this.instancesTableBody.appendChild(row);
+                });
+            }
+
+            switchTab(tabName) {
+                // Update tabs
+                document.querySelectorAll('.tab').forEach(tab => {
+                    tab.classList.toggle('active', tab.dataset.tab === tabName);
+                });
+                
+                // Update content
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.toggle('active', content.id === tabName + 'Tab');
+                });
+            }
+
+            showIframe(url, name) {
+                this.mainFrame.src = url;
+                this.currentUrl.textContent = url;
+                this.currentUrl.setAttribute('title', `${name} - ${url}`);
+                this.inputContainer.classList.add('hidden');
+                this.iframeWrapper.classList.remove('hidden');
+                this.topBar.classList.remove('hidden');
+            }
+
+            showInput() {
+                this.iframeWrapper.classList.add('hidden');
+                this.topBar.classList.add('hidden');
+                this.inputContainer.classList.remove('hidden');
+            }
+
+            reloadIframe() {
+                this.mainFrame.src = this.mainFrame.src;
+            }
+
+            updateCurrentUrl() {
+                try {
+                    const iframeUrl = this.mainFrame.contentWindow.location.href;
+                    this.currentUrl.textContent = iframeUrl;
+                } catch (e) {
+                    // Cross-origin restriction, keep current URL
+                }
+            }
+
+            showError(message) {
+                alert(message);
+            }
+
+            escapeHtml(unsafe) {
+                return unsafe
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/"/g, "&quot;")
+                    .replace(/'/g, "&#039;");
+            }
+        }
+
+        // Initialize app
+        let app;
+        document.addEventListener('DOMContentLoaded', () => {
+            app = new InstanceApp();
+        });
+    </script>
+</body>
+</html>
