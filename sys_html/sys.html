@@ -834,7 +834,7 @@
                         break;
                     case 'SET_GLASS_EFFECT':
                         localStorage.setItem('is_glass_enabled', data.status.toString());
-                        // Удаляем эти строки:
+                        // ненужно, но на всякий случай оставлю
                         // is_glass_enabled = data.status;
                         // 
                         // // Обновляем интерфейс сразу
@@ -848,7 +848,6 @@
                         //     notify_panel.classList.remove('withglass');
                         // }
 
-                        // Вместо них добавляем:
                         const startMenu = document.getElementById('stm');
                         const toolbar = document.getElementById('tlbr');
                         const notifyPanel = document.getElementById('notififi');
@@ -1608,5 +1607,6 @@
     </script>
 </body>
 </html>
+
 
 
