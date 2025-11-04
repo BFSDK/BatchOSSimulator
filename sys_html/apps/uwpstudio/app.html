@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Создание UWP приложения</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Whitney', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: #36393f;
+            color: #dcddde;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 480px;
+            padding: 20px;
+        }
+
+        .form-container {
+            background-color: #2f3136;
+            border-radius: 8px;
+            padding: 32px;
+            box-shadow: 0 2px 10px 0 rgba(0, 0, 0, 0.2);
+        }
+
+        .title {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 24px;
+            font-weight: 600;
+            color: white;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: #b9bbbe;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 10px;
+            background-color: #40444b;
+            border: 1px solid rgba(0, 0, 0, 0.3);
+            border-radius: 3px;
+            color: #dcddde;
+            font-size: 16px;
+            transition: border-color 0.2s ease;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: #7289da;
+        }
+
+        .button-container {
+            margin-top: 30px;
+        }
+
+        .create-button {
+            width: 100%;
+            padding: 12px;
+            background-color: #7289da;
+            border: none;
+            border-radius: 3px;
+            color: white;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .create-button:hover {
+            background-color: #677bc4;
+        }
+
+        .create-button:active {
+            background-color: #5b6eae;
+        }
+        /* DONT DELETE!!! Styles for cursor! */
+        * {
+            cursor: none !important;
+        }
+
+        .custom-cursor {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 32px;
+            height: 32px;
+            pointer-events: none;
+            z-index: 9999;
+            background-image: url('../../bin/cur/cursor.png'); /* path to system cursor, you can make path to your cursor */
+            background-size: cover;
+        }
+        /* End of styles for cursors */
+    </style>
+</head>
+<body>
+    <div class="custom-cursor"></div>
+    <div class="container">
+        <div class="form-container">
+            <h1 class="title">UWPStudio</h1>
+            
+            <div class="input-group">
+                <label class="input-label" for="app-id">App ID</label>
+                <input type="text" id="app-id" class="input-field" placeholder="Enter the app id">
+            </div>
+            
+            <div class="input-group">
+                <label class="input-label" for="app-name">App Name</label>
+                <input type="text" id="app-name" class="input-field" placeholder="Enter the app name">
+            </div>
+            
+            <div class="input-group">
+                <label class="input-label" for="app-link">Link</label>
+                <input type="text" id="app-link" class="input-field" placeholder="Enter link">
+            </div>
+
+            <div class="input-group">
+                <label class="input-label" for="app-icon">Icon</label>
+                <input type="text" id="app-icon" class="input-field" placeholder="Enter icon symbol">
+            </div>
+            
+            <div class="button-container">
+                <button class="create-button" id="create-button" onclick="install_app()">Create UWP App</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // UWPStudio //
+
+        function notify(title, subtitle) {
+            window.parent.postMessage({
+                type: 'BATCHOS_API',
+                action: 'SHOW_NOTIFY',
+                data: {
+                    notif_title: title,
+                    notif_subtitle: subtitle
+                }
+            }, '*');
+        }
+
+        function install_app() {
+            const appId = document.getElementById('app-id').value;
+            const appName = document.getElementById('app-name').value;
+            const appLink = document.getElementById('app-link').value;
+            const appIcon = document.getElementById('app-icon').value;
+            
+            if (!appId || !appName || !appLink) {
+                notify('UWPStudio', 'App creation error. Enter the right information!');
+                return;
+            }
+
+            window.parent.postMessage({
+                type: 'BATCHOS_API',
+                action: 'BATCHOS_APP_INSTALL',
+                data: {
+                    id: appIcon,
+                    name: appName,
+                    path: appLink,
+                    icon: appIcon
+                }
+            }, '*')
+
+            notify('UWPStudio', `App '${appName}' created! Added to Xfinder menu.`);
+        }
+
+        ///////////////
+        const cursor = document.querySelector('.custom-cursor');
+    
+        document.addEventListener('mousemove', (e) => {
+            cursor.style.left = e.clientX + 'px';
+            cursor.style.top = e.clientY + 'px';
+        });
+
+        document.addEventListener('mouseout', (e) => {
+            if (!e.relatedTarget) {
+                cursor.style.opacity = '0';
+            }
+        });
+
+        document.addEventListener('mouseover', () => {
+            cursor.style.opacity = '1';
+        });
+        //////////////////////DONT DELETE//////////////////////////////
+    </script>
+</body>
+</html>
